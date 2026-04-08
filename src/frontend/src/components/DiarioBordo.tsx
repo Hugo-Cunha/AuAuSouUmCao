@@ -26,7 +26,11 @@ export default function DiarioBordo() {
         const fetchHistorial = async () => {
             try {
                 // Pedido GET ao nosso servidor Express
-                const resposta = await axios.get('http://localhost:3000/api/animais/A-789/historial');
+                // 1. Vai buscar a variável do Amplify (ou usa localhost se estiveres no teu PC)
+                const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+
+                    // 2. Faz o pedido usando a variável
+                const resposta = await axios.get(`${apiUrl}/api/animais/A-789/historial`);
                 setHistorial(resposta.data);
                 setLoading(false);
             } catch (err) {
