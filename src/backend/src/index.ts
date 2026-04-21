@@ -1,4 +1,3 @@
-import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
@@ -14,10 +13,11 @@ const PORT = process.env.PORT || 3000;
 app.use(cors({
   origin: [
     'http://localhost:5173', // Para quando testares no teu PC com o Vite
-    'https://main.dgvaudjmhakvj.amplifyapp.com/' // SUBSTITUI pelo teu link do Amplify!
+    'https://main.dgvaudjmhakvj.amplifyapp.com' // <-- RETIRADA A BARRA NO FIM
   ],
   credentials: true
-}));app.use(express.json());
+}));
+app.use(express.json());
 
 // Rota principal de verificação de saúde (Health Check)
 app.get('/health', (req, res) => {
