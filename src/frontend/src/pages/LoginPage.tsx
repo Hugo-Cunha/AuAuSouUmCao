@@ -2,32 +2,33 @@ import React, { useState } from 'react';
 import { User} from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import './AuthPages.css'; // Usamos um CSS comum para as duas páginas
+import './AuthPages.css';
 
 const LoginPage: React.FC = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState('Utilizador'); // Role por defeito
+  const [role, setRole] = useState('Utilizador');
   const navigate = useNavigate();
+
+  // A TUA LIGAÇÃO AO BACKEND NA AWS
+  const API_URL = import.meta.env.VITE_API_URL || 'http://hotel-animais-api2-env.eba-2mnnmdjt.eu-west-3.elasticbeanstalk.com';
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      // Dispara o pedido para o teu backend local
-      const resposta = await axios.post('http://localhost:3000/api/login', {
+      // Dispara o pedido para o teu backend na AWS
+      const resposta = await axios.post(`${API_URL}/api/login`, {
         username,
         password,
         role
       });
       
-      alert(resposta.data.message); // Avisa que correu bem
-      // Guarda o token no browser (Local Storage) conforme Capítulo 4.2.2
+      alert(resposta.data.message); 
       localStorage.setItem('token', resposta.data.token);
       
-      // Redireciona consoante a role
       if (role === 'Gestora') navigate('/gestao');
       else if (role === 'Staff') navigate('/staff');
-      else navigate('/'); // Volta à Home se for utilizador normal
+      else navigate('/'); 
 
     } catch (erro: any) {
       alert(erro.response?.data?.error || 'Erro ao tentar iniciar sessão.');
@@ -83,7 +84,7 @@ const LoginPage: React.FC = () => {
         </div>
       </section>
 
-      {/* 5. FOOTER */}
+      {/* FOOTER */}
       <footer className="site-footer">
         <div className="footer-columns">
           <div className="footer-col">
@@ -115,8 +116,7 @@ const LoginPage: React.FC = () => {
 
         <div className="footer-bottom">
           <span className="footer-brand">Au Au sou um Cão!</span>
-          <div className="social-icons">
-          </div>
+          <div className="social-icons"></div>
         </div>
       </footer>
     </div>

@@ -10,6 +10,9 @@ const RegisterPage: React.FC = () => {
     username: '', password: '', confirmPassword: '', telemovel: '', nif: '', email: ''
   });
 
+  // A TUA LIGAÇÃO AO BACKEND NA AWS
+  const API_URL = import.meta.env.VITE_API_URL || 'http://hotel-animais-api2-env.eba-2mnnmdjt.eu-west-3.elasticbeanstalk.com';
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
@@ -21,10 +24,10 @@ const RegisterPage: React.FC = () => {
     }
 
     try {
-      // Dispara os dados para o Backend gravar na Base de Dados
-      const resposta = await axios.post('http://localhost:3000/api/register', formData);
-      alert(resposta.data.message); // Sucesso! Conta Criada!
-      navigate('/login'); // Vai para a página de login
+      // Dispara os dados para o Backend na AWS
+      const resposta = await axios.post(`${API_URL}/api/register`, formData);
+      alert(resposta.data.message); 
+      navigate('/login'); 
     } catch (erro: any) {
       alert(erro.response?.data?.error || 'Erro ao tentar criar a conta.');
     }
@@ -76,7 +79,7 @@ const RegisterPage: React.FC = () => {
       
       <div className="empty-space"></div>
 
-      {/* 5. FOOTER */}
+      {/* FOOTER */}
       <footer className="site-footer">
         <div className="footer-columns">
           <div className="footer-col">
@@ -108,8 +111,7 @@ const RegisterPage: React.FC = () => {
 
         <div className="footer-bottom">
           <span className="footer-brand">Au Au sou um Cão!</span>
-          <div className="social-icons">
-          </div>
+          <div className="social-icons"></div>
         </div>
       </footer>
     </div>
