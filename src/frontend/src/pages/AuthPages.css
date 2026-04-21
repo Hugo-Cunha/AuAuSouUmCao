@@ -1,0 +1,132 @@
+.auth-container {
+  max-width: 870px;
+  margin: 0 auto;
+  background-color: #E2E2E2;
+  font-family: 'Inter', 'Roboto', sans-serif;
+  color: #1A1A1A;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.auth-main-section {
+  display: flex;
+  padding: 40px 60px;
+  gap: 30px;
+  flex: 1;
+}
+
+.auth-main-section.center-card {
+  justify-content: center;
+  padding: 30px;
+}
+
+/* CARDS */
+.auth-form-card {
+  background-color: #D8D8D8;
+  border-radius: 16px;
+  padding: 30px;
+  width: 60%;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+
+.register-card {
+  background-color: #FFFFFF;
+  width: 85%;
+  padding: 30px 40px;
+}
+
+.auth-form-card h2 {
+  font-size: 28px;
+  margin: 0 0 20px 0;
+}
+
+.auth-form-card label {
+  font-size: 16px;
+  margin-bottom: 6px;
+  font-weight: 500;
+}
+
+.auth-form-card input {
+  background-color: #C8C8C8;
+  border: none;
+  border-radius: 8px;
+  height: 40px;
+  margin-bottom: 15px;
+  padding: 0 10px;
+  font-size: 16px;
+  outline: none;
+}
+
+.register-card input {
+  background-color: #D4D4D4;
+  border-radius: 10px;
+  height: 45px;
+}
+
+/* BUTTONS */
+.form-buttons {
+  display: flex;
+  gap: 15px;
+  margin-top: 10px;
+}
+
+.btn-primary {
+  background-color: #7DDFD3;
+  color: #1A1A1A;
+  border-radius: 20px;
+  padding: 10px 25px;
+  border: none;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.btn-secondary {
+  background-color: #D0D0D0;
+  color: #1A1A1A;
+  border-radius: 20px;
+  padding: 10px 25px;
+  border: 1px solid #BBBBBB;
+  text-decoration: none;
+  font-weight: bold;
+  cursor: pointer;
+  text-align: center;
+}
+
+.center-btn {
+  margin: 20px auto 0 auto;
+  display: block;
+  padding: 10px 35px;
+}
+
+/* ROLES PANEL */
+.roles-panel {
+  background-color: #C8C8C8;
+  border-radius: 12px;
+  padding: 15px 20px;
+  width: 30%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+}
+
+.role-button {
+  background: transparent;
+  border: none;
+  font-size: 16px;
+  padding: 10px 0;
+  cursor: pointer;
+  font-weight: 500;
+  color: #1A1A1A;
+}
+
+.role-button:hover, .role-button.active {
+  font-weight: bold;
+  text-decoration: underline;
+}
+
+.empty-space {
+  height: 70px;
+}
