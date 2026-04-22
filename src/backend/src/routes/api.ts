@@ -129,4 +129,156 @@ router.get('/animais/:idAnimal/historial', async (req: Request, res: Response) =
   }
 });
 
+// 4. ROTA PARA LISTAR TODOS OS ANIMAIS
+router.get('/animais', async (req: Request, res: Response) => {
+  try {
+    const animais = await prisma.animal.findMany({
+      include: {
+        planoVacinal: true
+      }
+    });
+
+    res.status(200).json(animais);
+  } catch (error) {
+    console.error("Erro ao listar animais:", error);
+    res.status(500).json({ error: 'Erro interno do servidor.' });
+  }
+});
+
+// 5. ROTA PARA CRIAR UM NOVO ANIMAL
+router.post('/animais', async (req: Request, res: Response) => {
+  const { nome, raca, tutorNif, microchip, estado } = req.body;
+
+  try {
+    // Verificar se o tutor existe
+    const tutorExiste = await prisma.tutor.findUnique({
+      where: { nif: tutorNif }
+    });
+
+    if (!tutorExiste) {
+      return res.status(404).json({ error: 'Tutor não encontrado.' });
+    }
+
+    const novoAnimal = await prisma.animal.create({
+      data: {
+        nome: nome || 'Animal sem nome',
+        raca: raca || 'Raça desconhecida',
+        tutorNif: tutorNif,
+        microchip: microchip || `CHIP-${Date.now()}`, // Gera um único se não for fornecido
+        estado: estado || 'Saudavel',
+        reatividade: 'Normal'
+      }
+    });
+
+    res.status(201).json(novoAnimal);
+  } catch (error) {
+    console.error("Erro ao criar animal:", error);
+    res.status(500).json({ error: 'Erro interno ao criar animal.' });
+  }
+});
+
+// 6. ROTA PARA LISTAR TODAS AS RESERVAS
+router.get('/reservas', async (req: Request, res: Response) => {
+  try {
+    const reservas = await prisma.reserva.findMany({
+      include: {
+        animal: true,
+        box: true,
+        servicos: true,
+        fatura: true
+      },
+      orderBy: { dataEntrada: 'desc' }
+    });
+
+    res.status(200).json(reservas);
+  } catch (error) {
+    console.error("Erro ao listar reservas:", error);
+    res.status(500).json({ error: 'Erro interno do servidor.' });
+  }
+});
+
+// 7. ROTA PARA CRIAR UMA NOVA RESERVA
+router.post('/reservas', async (req: Request, res: Response) => {
+  const { data, idAnimal, boxNumero } = req.body;
+
+  try {
+    // Verificar se o animal existe
+    const animalExiste = await prisma.animal.findUnique({
+      where: { idAnimal: idAnimal }
+    });
+
+    if (!animalExiste) {
+      return res.status(404).json({ error: 'Animal não encontrado.' });
+    }
+
+    // Se não houver box disponível, usar um padrão
+    const boxParaUsar = boxNumero || 1;
+
+    // Verificar se o box existe
+    const boxExiste = await prisma.box.findUnique({
+      where: { numero: boxParaUsar }
+    });
+
+    if (!boxExiste) {
+      return res.status(404).json({ error: 'Box não encontrado.' });
+    }
+
+    // Criar a reserva com data de entrada e saída
+    const dataEntrada = new Date(data);
+    const dataSaida = new Date(dataEntrada);
+    dataSaida.setDate(dataSaida.getDate() + 1); // Por padrão, 1 dia de estadia
+
+    const novaReserva = await prisma.reserva.create({
+      data: {
+        dataEntrada: dataEntrada,
+        dataSaida: dataSaida,
+        valor: 0, // Será definido depois
+        estado: 'Pendente',
+        animalId: idAnimal,
+        boxNumero: boxParaUsar
+      },
+      include: {
+        animal: true,
+        box: true,
+        servicos: true
+      }
+    });
+
+    res.status(201).json(novaReserva);
+  } catch (error) {
+    console.error("Erro ao criar reserva:", error);
+    res.status(500).json({ error: 'Erro interno ao criar reserva.' });
+  }
+});
+
+// 8. ROTA PARA ELIMINAR UMA RESERVA
+router.delete('/reservas/:idReserva', async (req: Request, res: Response) => {
+  const { idReserva } = req.params;
+
+  try {
+    const reservaExiste = await prisma.reserva.findUnique({
+      where: { idReserva: idReserva }
+    });
+
+    if (!reservaExiste) {
+      return res.status(404).json({ error: 'Reserva não encontrada.' });
+    }
+
+    // Apagar primeiro os serviços associados
+    await prisma.servico.deleteMany({
+      where: { reservaId: idReserva }
+    });
+
+    // Depois apagar a reserva
+    const reservaApagada = await prisma.reserva.delete({
+      where: { idReserva: idReserva }
+    });
+
+    res.status(200).json({ message: 'Reserva eliminada com sucesso!', reserva: reservaApagada });
+  } catch (error) {
+    console.error("Erro ao eliminar reserva:", error);
+    res.status(500).json({ error: 'Erro interno ao eliminar reserva.' });
+  }
+});
+
 export default router;

@@ -3,7 +3,8 @@ import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import PortalTutor from './pages/PortalTutor';   
-import DiarioBordoPage from './pages/DiarioBordoPage'; 
+import DiarioBordoPage from './pages/DiarioBordoPage';
+import MarcacoesPage from './pages/MarcacoesPage'; 
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
         {/* NOVAS ROTAS DO TUTOR */}
         <Route path="/tutor" element={<PortalTutor />} />
         <Route path="/tutor/diario" element={<DiarioBordoPage />} />
+        <Route path="/tutor/marcacoes" element={<MarcacoesPage />} />
         
         {/* Rota antiga do staff (podes manter ou apagar se já não usares) */}
         <Route path="/staff" element={<DiarioBordoPage />} />

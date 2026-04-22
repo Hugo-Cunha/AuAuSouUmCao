@@ -1,0 +1,386 @@
+.marcacoes-page-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: #ffffff;
+}
+
+.marcacoes-main {
+  flex: 1;
+  padding: 40px 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.page-title {
+  text-align: center;
+  font-size: 32px;
+  font-weight: 300;
+  margin-bottom: 40px;
+  color: #1a1a1a;
+}
+
+.marcacoes-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+  margin-bottom: 40px;
+}
+
+/* SECÇÃO 1: CALENDÁRIO */
+.secao-calendario {
+  background-color: #f8f8f8;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.secao-calendario h2 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 20px;
+  font-weight: 500;
+  margin-bottom: 20px;
+  color: #1a1a1a;
+}
+
+.calendario-container {
+  margin-bottom: 30px;
+}
+
+.date-input {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 16px;
+  margin-bottom: 15px;
+  cursor: pointer;
+  transition: border-color 0.3s ease;
+}
+
+.date-input:focus {
+  outline: none;
+  border-color: #7c3aed;
+}
+
+.data-selecionada {
+  font-size: 14px;
+  color: #666;
+  text-align: center;
+}
+
+.data-selecionada strong {
+  color: #7c3aed;
+  font-weight: 600;
+}
+
+/* Marcações do dia */
+.marcacoes-do-dia {
+  margin-top: 30px;
+  padding-top: 30px;
+  border-top: 2px solid #e0e0e0;
+}
+
+.marcacoes-do-dia h3 {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 15px;
+  color: #1a1a1a;
+}
+
+.marcacoes-lista {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.marcacao-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #fff;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  border-left: 4px solid #7c3aed;
+}
+
+.marcacao-item span {
+  font-weight: 500;
+  color: #1a1a1a;
+}
+
+.estado-reserva {
+  font-size: 12px;
+  color: #999;
+  margin: 3px 0 0 0;
+}
+
+.btn-apagar {
+  background: none;
+  border: none;
+  color: #e74c3c;
+  cursor: pointer;
+  padding: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.3s ease;
+}
+
+.btn-apagar:hover {
+  color: #c0392b;
+}
+
+.no-marcacoes {
+  text-align: center;
+  color: #999;
+  font-style: italic;
+  padding: 15px;
+}
+
+/* SECÇÃO 2: ADICIONAR CÃO */
+.secao-cao {
+  background-color: #f8f8f8;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.secao-cao h2 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 20px;
+  font-weight: 500;
+  margin-bottom: 20px;
+  color: #1a1a1a;
+}
+
+.cao-selector {
+  margin-bottom: 30px;
+}
+
+.cao-selector h3 {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 15px;
+  color: #1a1a1a;
+}
+
+.caos-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.cao-card {
+  background-color: #fff;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 15px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.cao-card:hover {
+  border-color: #7c3aed;
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.1);
+}
+
+.cao-card.ativo {
+  border-color: #7c3aed;
+  background-color: #f3f0ff;
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.2);
+}
+
+.cao-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.cao-card-header h4 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.check-icon {
+  color: #7c3aed;
+}
+
+.cao-card p {
+  margin: 5px 0;
+  font-size: 13px;
+  color: #666;
+}
+
+.cao-card strong {
+  color: #1a1a1a;
+  font-weight: 600;
+}
+
+.no-caos {
+  text-align: center;
+  color: #999;
+  font-style: italic;
+  padding: 20px;
+  background-color: #fff;
+  border-radius: 8px;
+}
+
+/* Botões */
+.btn-adicionar-cao,
+.btn-criar-marcacao {
+  width: 100%;
+  padding: 12px;
+  margin-top: 15px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-adicionar-cao {
+  background-color: #7c3aed;
+  color: white;
+}
+
+.btn-adicionar-cao:hover {
+  background-color: #6d28d9;
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+}
+
+.btn-criar-marcacao {
+  background-color: #10b981;
+  color: white;
+  margin-top: 20px;
+}
+
+.btn-criar-marcacao:hover {
+  background-color: #059669;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+/* Formulário para novo cão */
+.novo-cao-form {
+  background-color: #fff;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 20px;
+  margin-top: 20px;
+}
+
+.novo-cao-form h3 {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  color: #1a1a1a;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #1a1a1a;
+}
+
+.form-group input,
+.form-group textarea {
+  padding: 10px;
+  border: 2px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: inherit;
+  transition: border-color 0.3s ease;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #7c3aed;
+}
+
+.ficheiro-info {
+  margin-top: 8px;
+  font-size: 13px;
+  color: #10b981;
+  font-weight: 500;
+}
+
+.btn-confirmar {
+  width: 100%;
+  padding: 12px;
+  background-color: #7c3aed;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 15px;
+  transition: all 0.3s ease;
+}
+
+.btn-confirmar:hover {
+  background-color: #6d28d9;
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+}
+
+.loading {
+  text-align: center;
+  padding: 40px;
+  font-size: 18px;
+  color: #666;
+}
+
+/* Responsivo */
+@media (max-width: 768px) {
+  .marcacoes-content {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .marcacoes-main {
+    padding: 20px 15px;
+  }
+
+  .page-title {
+    font-size: 24px;
+    margin-bottom: 30px;
+  }
+
+  .secao-calendario,
+  .secao-cao {
+    padding: 20px;
+  }
+}
