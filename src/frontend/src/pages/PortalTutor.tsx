@@ -59,7 +59,7 @@ const PortalTutor: React.FC = () => {
             <main className="tutor-main-section">
                 
                 {/* 2A. CARD ESQUERDO */}
-                <div className="tutor-card card-left">
+                <div className="tutor-card card-left" onClick={() => navigate('/tutor/marcacoes')}>
                     <h2 className="tutor-card-title">Marcação e Reserva</h2>
                     <img 
                       src="https://img.freepik.com/free-vector/appointment-booking-with-calendar_23-2148556782.jpg" 
