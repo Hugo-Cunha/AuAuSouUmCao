@@ -1,132 +1,286 @@
+/* ==================== AUTH PAGES ==================== */
+
 .auth-container {
-  max-width: 870px;
-  margin: 0 auto;
+  width: 100%;
+  min-width: 0;
   background-color: #E2E2E2;
-  font-family: 'Inter', 'Roboto', sans-serif;
+  font-family: 'Segoe UI', system-ui, sans-serif;
   color: #1A1A1A;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
 }
 
+/* HEADER */
+.site-header {
+  background-color: #7DDFD3;
+  height: 72px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 40px;
+  width: 100%;
+}
+
+.logo-circle {
+  width: 52px;
+  height: 52px;
+  background-color: #FFFFFF;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  border: 2px solid rgba(0,0,0,0.15);
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.logo-title {
+  font-size: 9px;
+  font-weight: bold;
+  line-height: 1.2;
+}
+
+.logo-subtitle {
+  font-size: 7px;
+  line-height: 1.2;
+}
+
+.header-title {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0;
+  color: #1A1A1A;
+}
+
+.header-login {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  gap: 2px;
+}
+
+.header-login span {
+  font-size: 11px;
+  font-weight: 600;
+  color: #1A1A1A;
+}
+
+/* MAIN SECTION */
 .auth-main-section {
   display: flex;
-  padding: 40px 60px;
+  padding: 50px 80px;
   gap: 30px;
   flex: 1;
+  align-items: flex-start;
+  width: 100%;
 }
 
 .auth-main-section.center-card {
   justify-content: center;
-  padding: 30px;
+  align-items: flex-start;
+  padding: 50px 80px;
 }
 
-/* CARDS */
+/* FORM CARD */
 .auth-form-card {
   background-color: #D8D8D8;
   border-radius: 16px;
-  padding: 30px;
-  width: 60%;
+  padding: 36px;
+  flex: 1;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
 }
 
 .register-card {
   background-color: #FFFFFF;
-  width: 85%;
-  padding: 30px 40px;
+  max-width: 600px;
+  padding: 40px 52px;
+  flex: unset;
+  width: 100%;
 }
 
 .auth-form-card h2 {
-  font-size: 28px;
-  margin: 0 0 20px 0;
+  font-size: 26px;
+  margin: 0 0 24px 0;
+  font-weight: 700;
+  text-align: center;
 }
 
 .auth-form-card label {
-  font-size: 16px;
-  margin-bottom: 6px;
-  font-weight: 500;
+  font-size: 14px;
+  margin-bottom: 5px;
+  font-weight: 600;
+  color: #333;
+  display: block;
 }
 
 .auth-form-card input {
   background-color: #C8C8C8;
-  border: none;
+  border: 1.5px solid transparent;
   border-radius: 8px;
-  height: 40px;
-  margin-bottom: 15px;
-  padding: 0 10px;
-  font-size: 16px;
+  height: 42px;
+  margin-bottom: 14px;
+  padding: 0 12px;
+  font-size: 15px;
   outline: none;
+  width: 100%;
+  transition: border-color 0.2s;
+  display: block;
+}
+
+.auth-form-card input:focus {
+  border-color: #7DDFD3;
 }
 
 .register-card input {
   background-color: #D4D4D4;
-  border-radius: 10px;
-  height: 45px;
 }
 
 /* BUTTONS */
 .form-buttons {
   display: flex;
-  gap: 15px;
-  margin-top: 10px;
+  gap: 12px;
+  margin-top: 14px;
 }
 
 .btn-primary {
   background-color: #7DDFD3;
   color: #1A1A1A;
   border-radius: 20px;
-  padding: 10px 25px;
+  padding: 10px 28px;
   border: none;
-  font-weight: bold;
+  font-weight: 700;
+  font-size: 14px;
   cursor: pointer;
+  transition: background-color 0.2s;
 }
+
+.btn-primary:hover { background-color: #5cc8bb; }
 
 .btn-secondary {
   background-color: #D0D0D0;
   color: #1A1A1A;
   border-radius: 20px;
-  padding: 10px 25px;
+  padding: 10px 28px;
   border: 1px solid #BBBBBB;
   text-decoration: none;
-  font-weight: bold;
+  font-weight: 700;
+  font-size: 14px;
   cursor: pointer;
-  text-align: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
 }
+
+.btn-secondary:hover { background-color: #bbb; }
 
 .center-btn {
   margin: 20px auto 0 auto;
   display: block;
-  padding: 10px 35px;
+  padding: 11px 44px;
 }
 
 /* ROLES PANEL */
 .roles-panel {
   background-color: #C8C8C8;
-  border-radius: 12px;
-  padding: 15px 20px;
-  width: 30%;
+  border-radius: 14px;
+  padding: 16px;
+  width: 200px;
+  flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  justify-content: space-around;
+  gap: 4px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+  align-self: flex-start;
 }
 
 .role-button {
   background: transparent;
   border: none;
-  font-size: 16px;
-  padding: 10px 0;
+  font-size: 15px;
+  padding: 10px 14px;
   cursor: pointer;
   font-weight: 500;
   color: #1A1A1A;
+  text-align: left;
+  border-radius: 8px;
+  transition: background-color 0.15s;
+  width: 100%;
 }
 
-.role-button:hover, .role-button.active {
-  font-weight: bold;
-  text-decoration: underline;
+.role-button:hover { background-color: rgba(0,0,0,0.07); }
+
+.role-button.active {
+  font-weight: 700;
+  background-color: #7DDFD3;
 }
 
-.empty-space {
-  height: 70px;
+/* FOOTER */
+.site-footer {
+  background-color: #C8C8C8;
+  padding: 24px 60px;
+  margin-top: auto;
+  width: 100%;
+}
+
+.footer-columns {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  gap: 20px;
+}
+
+.footer-col h4 {
+  font-size: 13px;
+  margin: 0 0 8px 0;
+  font-weight: 700;
+}
+
+.footer-col ul { list-style: none; padding: 0; margin: 0; }
+
+.footer-col li {
+  font-size: 12px;
+  margin-bottom: 5px;
+  cursor: pointer;
+  color: #444;
+}
+
+.footer-col li:hover { text-decoration: underline; }
+
+.footer-divider {
+  border: none;
+  border-top: 1px solid #aaa;
+  margin: 14px 0;
+}
+
+.footer-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.footer-brand { font-size: 13px; font-weight: 700; }
+
+.social-icons { display: flex; gap: 8px; }
+
+.empty-space { flex: 1; }
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+  .site-header { padding: 0 20px; height: 64px; }
+  .header-title { font-size: 16px; }
+  .auth-main-section,
+  .auth-main-section.center-card {
+    flex-direction: column;
+    padding: 24px 20px;
+    align-items: stretch;
+  }
+  .roles-panel { width: 100%; flex-direction: row; flex-wrap: wrap; }
+  .site-footer { padding: 20px; }
+  .footer-columns { flex-wrap: wrap; }
 }

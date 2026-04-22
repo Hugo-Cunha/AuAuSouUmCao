@@ -11,8 +11,7 @@ const HomePage: React.FC = () => {
       <header className="site-header">
         <div className="logo-container">
           <div className="logo-circle">
-            <span className="logo-title">Au au...</span>
-            <span className="logo-subtitle">sou um cão</span>
+            <img src="https://cdn.discordapp.com/attachments/1212044201747816518/1496523823208599603/Gemini_Generated_Image_sebx2ssebx2ssebx.png?ex=69ea31eb&is=69e8e06b&hm=e86093c99b49fbbe0b718a5942cb18caa1e6e79fdf19253b2e252c75d225bb2e" alt="auau"/>
           </div>
         </div>
         <h1 className="header-title">Home Page</h1>
@@ -122,6 +121,10 @@ const HomePage: React.FC = () => {
         <div className="footer-bottom">
           <span className="footer-brand">Au Au sou um Cão!</span>
           <div className="social-icons">
+            {/* Ícones de redes sociais podem ser adicionados aqui */}
+            <img src="https://cdn-icons-png.flaticon.com/512/733/733547.png" alt="Facebook" className="social-icon" />
+            <img src="https://cdn-icons-png.flaticon.com/512/733/733579.png" alt="Twitter" className="social-icon" />
+            <img src="https://cdn-icons-png.flaticon.com/512/733/733558.png" alt="Instagram" className="social-icon" />
           </div>
         </div>
       </footer>
