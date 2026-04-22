@@ -41,6 +41,20 @@ async function main() {
     }
   });
 
+  await prisma.box.upsert({
+    where: { numero: 1 },
+    update: {},
+    create: {
+      numero: 1,
+      tamanho: 2,
+      ocupacao: 0,
+      estado: 'Higienizada',
+      reservas: {
+        create: []
+      }
+    }
+  });
+
   await prisma.animal.upsert({
     where: { idAnimal: 'A-789' },
     update: {},

@@ -26,9 +26,14 @@ interface Reserva {
 }
 
 const MarcacoesPage: React.FC = () => {
-  const [dataSelecionada, setDataSelecionada] = useState<string>(
-    new Date().toISOString().split('T')[0]
-  );
+  const today = new Date();
+  const formatDate = (date: Date) => date.toISOString().split('T')[0];
+  const [dataEntrada, setDataEntrada] = useState<string>(formatDate(today));
+  const [dataSaida, setDataSaida] = useState<string>(() => {
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return formatDate(tomorrow);
+  });
   const [animais, setAnimais] = useState<Animal[]>([]);
   const [animalSelecionado, setAnimalSelecionado] = useState<Animal | null>(null);
   const [reservas, setReservas] = useState<Reserva[]>([]);
@@ -120,8 +125,13 @@ const MarcacoesPage: React.FC = () => {
   };
 
   const criarReserva = async () => {
-    if (!dataSelecionada || !animalSelecionado) {
-      alert('Por favor, selecione a data e o animal!');
+    if (!dataEntrada || !dataSaida || !animalSelecionado) {
+      alert('Por favor, selecione o intervalo e o animal!');
+      return;
+    }
+
+    if (new Date(dataSaida) <= new Date(dataEntrada)) {
+      alert('A data de saída deve ser posterior à data de entrada.');
       return;
     }
 
@@ -129,16 +139,18 @@ const MarcacoesPage: React.FC = () => {
       const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
       
       const res = await axios.post(`${API_URL}/api/reservas`, {
-        data: dataSelecionada,
+        dataEntrada,
+        dataSaida,
         idAnimal: animalSelecionado.idAnimal,
         boxNumero: 1,
       });
 
       setReservas([...reservas, res.data]);
       alert('Reserva criada com sucesso!');
-    } catch (err) {
+    } catch (err: any) {
       console.error('Erro ao criar reserva:', err);
-      alert('Erro ao criar reserva!');
+      const mensagem = err?.response?.data?.error || 'Erro ao criar reserva!';
+      alert(mensagem);
     }
   };
 
@@ -154,10 +166,10 @@ const MarcacoesPage: React.FC = () => {
     }
   };
 
-  // Filtrar reservas da data selecionada
-  const reservasDia = reservas.filter((r) => {
-    const dataEntrada = new Date(r.dataEntrada).toISOString().split('T')[0];
-    return dataEntrada === dataSelecionada;
+  // Filtrar reservas no intervalo selecionado
+  const reservasPeriodo = reservas.filter((r) => {
+    const dataReserva = new Date(r.dataEntrada).toISOString().split('T')[0];
+    return dataReserva >= dataEntrada && dataReserva <= dataSaida;
   });
 
   if (loading) {
@@ -185,23 +197,38 @@ const MarcacoesPage: React.FC = () => {
             </h2>
 
             <div className="calendario-container">
-              <input
-                type="date"
-                value={dataSelecionada}
-                onChange={(e) => setDataSelecionada(e.target.value)}
-                className="date-input"
-              />
+              <div className="date-range-row">
+                <div>
+                  <label>Entrada</label>
+                  <input
+                    type="date"
+                    value={dataEntrada}
+                    onChange={(e) => setDataEntrada(e.target.value)}
+                    className="date-input"
+                  />
+                </div>
+                <div>
+                  <label>Saída</label>
+                  <input
+                    type="date"
+                    value={dataSaida}
+                    onChange={(e) => setDataSaida(e.target.value)}
+                    className="date-input"
+                    min={dataEntrada}
+                  />
+                </div>
+              </div>
               <p className="data-selecionada">
-                Data Selecionada: <strong>{new Date(dataSelecionada).toLocaleDateString('pt-PT', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</strong>
+                Intervalo: <strong>{new Date(dataEntrada).toLocaleDateString('pt-PT')} - {new Date(dataSaida).toLocaleDateString('pt-PT')}</strong>
               </p>
             </div>
 
             {/* Reservas do dia */}
             <div className="marcacoes-do-dia">
-              <h3>Reservas para este dia</h3>
-              {reservasDia.length > 0 ? (
+              <h3>Reservas neste intervalo</h3>
+              {reservasPeriodo.length > 0 ? (
                 <ul className="marcacoes-lista">
-                  {reservasDia.map((reserva) => (
+                  {reservasPeriodo.map((reserva) => (
                     <li key={reserva.idReserva} className="marcacao-item">
                       <div>
                         <span>{reserva.animal.nome}</span>

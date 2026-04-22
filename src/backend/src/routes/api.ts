@@ -199,18 +199,16 @@ router.get('/reservas', async (req: Request, res: Response) => {
 
 // 7. ROTA PARA CRIAR UMA NOVA RESERVA
 router.post('/reservas', async (req: Request, res: Response) => {
-  const { data, idAnimal, boxNumero } = req.body;
+  const { data, dataEntrada, dataSaida, idAnimal, boxNumero } = req.body;
 
   try {
     // Verificar se o animal existe
     const animalExiste = await prisma.animal.findUnique({
       where: { idAnimal: idAnimal }
     });
-
     if (!animalExiste) {
       return res.status(404).json({ error: 'Animal não encontrado.' });
     }
-
     // Se não houver box disponível, usar um padrão
     const boxParaUsar = boxNumero || 1;
 
@@ -223,16 +221,25 @@ router.post('/reservas', async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Box não encontrado.' });
     }
 
-    // Criar a reserva com data de entrada e saída
-    const dataEntrada = new Date(data);
-    const dataSaida = new Date(dataEntrada);
-    dataSaida.setDate(dataSaida.getDate() + 1); // Por padrão, 1 dia de estadia
+    const inicio = dataEntrada ? new Date(dataEntrada) : data ? new Date(data) : null;
+    if (!inicio || isNaN(inicio.getTime())) {
+      return res.status(400).json({ error: 'Data de entrada inválida.' });
+    }
+
+    const fim = dataSaida ? new Date(dataSaida) : null;
+    if (!fim || isNaN(fim.getTime())) {
+      return res.status(400).json({ error: 'Data de saída inválida.' });
+    }
+
+    if (fim <= inicio) {
+      return res.status(400).json({ error: 'A data de saída deve ser posterior à data de entrada.' });
+    }
 
     const novaReserva = await prisma.reserva.create({
       data: {
-        dataEntrada: dataEntrada,
-        dataSaida: dataSaida,
-        valor: 0, // Será definido depois
+        dataEntrada: inicio,
+        dataSaida: fim,
+        valor: 0,
         estado: 'Pendente',
         animalId: idAnimal,
         boxNumero: boxParaUsar
