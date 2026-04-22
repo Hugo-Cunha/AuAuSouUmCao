@@ -2,19 +2,24 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
-import DiarioBordo from './components/DiarioBordo';
+import PortalTutor from './pages/PortalTutor';   
+import DiarioBordoPage from './pages/DiarioBordoPage'; 
 
 function App() {
   return (
     <BrowserRouter>
-    
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/criar-conta" element={<RegisterPage />} />
-        <Route path="/staff" element={<DiarioBordo />} />
+        
+        {/* NOVAS ROTAS DO TUTOR */}
+        <Route path="/tutor" element={<PortalTutor />} />
+        <Route path="/tutor/diario" element={<DiarioBordoPage />} />
+        
+        {/* Rota antiga do staff (podes manter ou apagar se já não usares) */}
+        <Route path="/staff" element={<DiarioBordoPage />} />
       </Routes>
-
     </BrowserRouter>
   );
 }

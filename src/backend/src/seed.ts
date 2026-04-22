@@ -41,6 +41,32 @@ async function main() {
     }
   });
 
+  await prisma.animal.upsert({
+    where: { idAnimal: 'A-789' },
+    update: {},
+    create: {
+      idAnimal: 'A-789',
+      nome: 'Bobi',
+      raca: 'Labrador',
+      reatividade: 'Baixa',
+      microchip: 'PT123456789',
+      estado: 'Saudavel',
+      tutorNif: '123456789', // NIF da Maria Cliente!
+      diarioBordo: {
+        create: [
+          { 
+            descricao: 'Passeio matinal concluído com muita energia! Brincou com a bola.', 
+            fotos: [] 
+          },
+          { 
+            descricao: 'Comeu a ração toda. Está muito bem disposto hoje.', 
+            fotos: [] 
+          }
+        ]
+      }
+    }
+  });
+
   console.log('Contas criadas com SUCESSO! 🚀');
 }
 

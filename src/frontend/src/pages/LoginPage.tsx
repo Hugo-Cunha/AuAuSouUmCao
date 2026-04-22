@@ -1,34 +1,43 @@
 import React, { useState } from 'react';
-import { User} from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import Header from '../components/Header';
+import Footer from '../components/Footer';
 import './AuthPages.css';
 
 const LoginPage: React.FC = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState('Utilizador');
   const navigate = useNavigate();
 
-  // A TUA LIGAÇÃO AO BACKEND NA AWS
-  const API_URL = import.meta.env.VITE_API_URL || 'http://hotel-animais-api2-env.eba-2mnnmdjt.eu-west-3.elasticbeanstalk.com';
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'; 
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      // Dispara o pedido para o teu backend na AWS
-      const resposta = await axios.post(`${API_URL}/api/login`, {
-        username, // O backend continua a receber a variável "username", mas agora o cliente escreveu lá o Email
-        password,
-        role
-      });
+      // Mandamos só Email e Password
+      const resposta = await axios.post(`${API_URL}/api/login`, { username, password });
       
-      alert(resposta.data.message); 
-      localStorage.setItem('token', resposta.data.token);
+      // Extraímos também os dados do utilizador que o backend vai enviar
+      const { token, role, message, nome, nif, telemovel } = resposta.data;
       
-      if (role === 'Gestora') navigate('/gestao');
-      else if (role === 'Staff') navigate('/staff');
-      else navigate('/'); 
+      alert(message); 
+      localStorage.setItem('token', token);
+      localStorage.setItem('role', role); 
+      
+      // Guardamos os dados pessoais para o cabeçalho
+      localStorage.setItem('user_nome', nome || '');
+      localStorage.setItem('user_nif', nif || '');
+      localStorage.setItem('user_telemovel', telemovel || '');
+      
+      // O REDIRECIONAMENTO AUTOMÁTICO MÁGICO!
+      if (role === 'Admin') {
+        navigate('/gestao');
+      } else if (role === 'Staff' || role === 'Vet') {
+        navigate('/staff');
+      } else {
+        navigate('/tutor'); 
+      }
 
     } catch (erro: any) {
       alert(erro.response?.data?.error || 'Erro ao tentar iniciar sessão.');
@@ -37,25 +46,11 @@ const LoginPage: React.FC = () => {
 
   return (
     <div className="auth-container">
-      {/* HEADER */}
-      <header className="site-header">
-        <Link to="/" className="logo-container" style={{ textDecoration: 'none', color: 'inherit' }}>
-          <div className="logo-circle">
-            <span className="logo-title">Au au...</span>
-            <span className="logo-subtitle">sou um cão</span>
-          </div>
-        </Link>
-        <h1 className="header-title">Página de LOGIN</h1>
-        <div className="header-login">
-          <User size={24} color="#1A1A1A" />
-          <span>Iniciar Sessão</span>
-        </div>
-      </header>
+      <Header title="Página de LOGIN" />
 
-      {/* MAIN SECTION */}
-      <section className="auth-main-section">
-        <form className="auth-form-card" onSubmit={handleLogin}>
-          <h2>Login</h2>
+      <section className="auth-main-section center-card">
+        <form className="auth-form-card" style={{ maxWidth: '450px' }} onSubmit={handleLogin}>
+          <h2>Iniciar Sessão</h2>
           
           <label>Email:</label>
           <input type="text" value={username} onChange={e => setUsername(e.target.value)} required />
@@ -63,62 +58,16 @@ const LoginPage: React.FC = () => {
           <label>Password:</label>
           <input type="password" value={password} onChange={e => setPassword(e.target.value)} required />
           
-          <div className="form-buttons">
-            <button type="submit" className="btn-primary">Login</button>
-            <Link to="/criar-conta" className="btn-secondary">Criar Conta</Link>
+          <div className="form-buttons center-btn">
+            <button type="submit" className="btn-primary" style={{ width: '100%' }}>Login</button>
           </div>
+          <p style={{ textAlign: 'center', marginTop: '15px', fontSize: '13px' }}>
+            Ainda não tem conta? <span style={{ color: '#7DDFD3', cursor: 'pointer', fontWeight: 'bold' }} onClick={() => navigate('/criar-conta')}>Registe-se aqui</span>
+          </p>
         </form>
-
-        {/* ROLES PANEL */}
-        <div className="roles-panel">
-          {['Gestora', 'Utilizador', 'Staff', 'Receção', 'Veterinaria'].map(r => (
-            <button 
-              key={r} 
-              type="button"
-              className={`role-button ${role === r ? 'active' : ''}`}
-              onClick={() => setRole(r)}
-            >
-              {r}
-            </button>
-          ))}
-        </div>
       </section>
 
-      {/* FOOTER */}
-      <footer className="site-footer">
-        <div className="footer-columns">
-          <div className="footer-col">
-            <h4>Conheça-nos</h4>
-            <ul>
-              <li>Quem Somos</li>
-              <li>Opiniões de Clientes</li>
-            </ul>
-          </div>
-          <div className="footer-col">
-            <h4>Serviços</h4>
-            <ul>
-              <li>O nosso Hotel</li>
-              <li>Clínica Veterinária</li>
-              <li>Site de rações</li>
-            </ul>
-          </div>
-          <div className="footer-col">
-            <h4>Ajuda</h4>
-            <ul>
-              <li>Contacte-nos</li>
-              <li>Perguntas</li>
-              <li>Fazer Reservas</li>
-            </ul>
-          </div>
-        </div>
-
-        <hr className="footer-divider" />
-
-        <div className="footer-bottom">
-          <span className="footer-brand">Au Au sou um Cão!</span>
-          <div className="social-icons"></div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 };

@@ -1,0 +1,133 @@
+/* ==================== PORTAL DO TUTOR ==================== */
+
+.tutor-main-section {
+  background-color: #FFFFFF;
+  padding: 40px;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  gap: 40px;
+  flex: 1;
+}
+
+.tutor-card {
+  background-color: #FFFFFF;
+  border: 1px solid #DDDDDD;
+  border-radius: 12px;
+  height: 440px;
+  display: flex;
+  flex-direction: column;
+}
+
+.tutor-card-title {
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-weight: 300; /* Light */
+  font-size: 28px;
+  color: #1A1A1A;
+  text-align: center;
+  margin: 0;
+}
+
+/* CARD ESQUERDO */
+.card-left {
+  width: 460px;
+  padding: 30px;
+  align-items: center;
+}
+
+.card-left img {
+  width: 300px;
+  height: 250px;
+  object-fit: contain;
+  margin-top: auto;
+  margin-bottom: auto;
+}
+
+/* CARD DIREITO */
+.card-right {
+  width: 650px;
+  padding: 25px;
+}
+
+.animal-details-subcard {
+  background-color: #E8E8E8;
+  border-radius: 8px;
+  padding: 10px 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+.details-col {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.details-col span {
+  font-size: 12px;
+  color: #1A1A1A;
+}
+
+.btn-fotos {
+  background-color: #FFFFFF;
+  border: 1px solid #DDDDDD;
+  border-radius: 6px;
+  font-size: 11px;
+  padding: 8px 12px;
+  cursor: pointer;
+  text-align: center;
+  font-weight: 600;
+  transition: background-color 0.2s;
+}
+
+.btn-fotos:hover { background-color: #f0f0f0; }
+
+.tasks-area {
+  background-color: #A8EDE8;
+  border-radius: 8px;
+  padding: 10px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.task-item {
+  background-color: #FFFFFF;
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin-bottom: 6px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.status-indicator {
+  width: 20px;
+  height: 20px;
+  border-radius: 2px;
+}
+
+.separator {
+  border: none;
+  border-top: 1px solid #CCCCCC;
+  width: 90%;
+  margin: 0 auto 30px auto;
+}
+
+.card-right {
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card-right:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(0,0,0,0.1);
+}
+
+/* RESPONSIVE */
+@media (max-width: 1100px) {
+  .tutor-main-section { flex-direction: column; align-items: center; }
+  .card-left, .card-right { width: 100%; max-width: 650px; height: auto; min-height: 440px; }
+}

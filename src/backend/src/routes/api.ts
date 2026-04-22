@@ -44,16 +44,15 @@ router.post('/register', async (req: Request, res: Response) => {
 
 // 2. ROTA DE LOGIN
 router.post('/login', async (req: Request, res: Response) => {
-  const { username, password, role } = req.body;
+  const { username, password } = req.body; // Já não recebemos a "role" do frontend!
 
   try {
-    // 2.1 Buscar o utilizador pelo Email ou Username
+    // Busca o utilizador e traz logo a informação se ele é Tutor ou Funcionario
     const utilizador = await prisma.utilizador.findFirst({
-      where: {
-        OR: [
-          { email: username },
-          { nome: username } 
-        ]
+      where: { email: username },
+      include: {
+        tutor: true,
+        funcionario: true
       }
     });
 
@@ -61,22 +60,72 @@ router.post('/login', async (req: Request, res: Response) => {
       return res.status(401).json({ error: 'Utilizador não encontrado!' });
     }
 
-    // 2.2 Verificar a password
     if (utilizador.password !== password) {
       return res.status(401).json({ error: 'A password está incorreta!' });
     }
 
-    // 2.3 Gerar o Token usando a chave primária correta (idUtilizador)
+    // O Backend descobre qual é a Role real da pessoa
+    let roleReal = 'Tutor'; // Assume que é Tutor por defeito
+    if (utilizador.funcionario) {
+      roleReal = utilizador.funcionario.perfil; // Pode ser 'Admin', 'Staff' ou 'Vet'
+    }
+
     const token = jwt.sign(
-      { userId: utilizador.idUtilizador, role: role }, 
+      { userId: utilizador.idUtilizador, role: roleReal }, 
       process.env.JWT_SECRET || 'chave_secreta_hotel_canino_2026', 
       { expiresIn: '8h' }
     );
 
-    res.status(200).json({ message: 'Login efetuado com sucesso!', token: token });
+    // Devolvemos o token, a Role e os DADOS PESSOAIS para o frontend!
+    res.status(200).json({ 
+      message: `Bem-vindo, ${utilizador.nome}!`, 
+      token: token,
+      role: roleReal,
+      nome: utilizador.nome,
+      nif: utilizador.tutor ? utilizador.tutor.nif : '---',
+      telemovel: utilizador.tutor ? utilizador.tutor.contacto : '---'
+    });
   } catch (error) {
     console.error("Erro no Login:", error);
     res.status(500).json({ error: 'Erro interno ao validar o login.' });
+  }
+});
+
+  // 3. ROTA DO DIÁRIO DE BORDO DO STAFF
+router.get('/animais/:idAnimal/historial', async (req: Request, res: Response) => {
+  const { idAnimal } = req.params;
+
+  try {
+    // Procura o animal e o seu diário de bordo na Base de Dados
+    const animal = await prisma.animal.findUnique({
+      where: { idAnimal: idAnimal },
+      include: {
+        diarioBordo: {
+          orderBy: { timestamp: 'desc' } // Ordena do mais recente para o mais antigo
+        }
+      }
+    });
+
+    if (!animal) {
+      return res.status(404).json({ error: 'Animal não encontrado na base de dados.' });
+    }
+
+    // Formata os dados exatamente como o Frontend está à espera
+    const historial = {
+      idAnimal: animal.idAnimal,
+      nome: animal.nome,
+      estadoClinico: animal.estado,
+      diarioBordo: animal.diarioBordo.map((registo: any) => ({
+        dataHora: registo.timestamp,
+        descricao: registo.descricao,
+        fotoUrl: registo.fotos[0] || ''
+      }))
+    };
+
+    res.status(200).json(historial);
+  } catch (error) {
+    console.error("Erro ao buscar historial:", error);
+    res.status(500).json({ error: 'Erro interno do servidor.' });
   }
 });
 
