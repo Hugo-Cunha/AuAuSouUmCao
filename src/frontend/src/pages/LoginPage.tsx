@@ -18,7 +18,7 @@ const LoginPage: React.FC = () => {
     try {
       // Dispara o pedido para o teu backend na AWS
       const resposta = await axios.post(`${API_URL}/api/login`, {
-        username,
+        username, // O backend continua a receber a variável "username", mas agora o cliente escreveu lá o Email
         password,
         role
       });
@@ -57,7 +57,7 @@ const LoginPage: React.FC = () => {
         <form className="auth-form-card" onSubmit={handleLogin}>
           <h2>Login</h2>
           
-          <label>Username:</label>
+          <label>Email:</label>
           <input type="text" value={username} onChange={e => setUsername(e.target.value)} required />
           
           <label>Password:</label>

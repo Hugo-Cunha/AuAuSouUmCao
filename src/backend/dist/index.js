@@ -14,8 +14,8 @@ const PORT = process.env.PORT || 3000;
 // Middlewares globais
 app.use((0, cors_1.default)({
     origin: [
-        'http://localhost:5173', // Para quando testares no teu PC com o Vite
-        'https://main.dgvaudjmhakvj.amplifyapp.com' // SUBSTITUI pelo teu link do Amplify!
+        'http://localhost:5173', 
+        'https://main.dgvaudjmhakvj.amplifyapp.com' 
     ],
     credentials: true
 }));

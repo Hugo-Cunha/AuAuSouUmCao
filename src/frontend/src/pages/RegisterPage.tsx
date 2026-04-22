@@ -55,7 +55,7 @@ const RegisterPage: React.FC = () => {
         <form className="auth-form-card register-card" onSubmit={handleRegister}>
           <h2>Criar Conta</h2>
           
-          <label>Username:</label>
+          <label>Nome Completo:</label>
           <input type="text" name="username" onChange={handleChange} required />
           
           <label>Password:</label>
