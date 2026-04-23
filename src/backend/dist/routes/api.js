@@ -43,31 +43,278 @@ router.post('/register', async (req, res) => {
 });
 // 2. ROTA DE LOGIN
 router.post('/login', async (req, res) => {
-    const { username, password, role } = req.body;
+    const { username, password } = req.body; // Já não recebemos a "role" do frontend!
     try {
-        // 2.1 Buscar o utilizador pelo Email ou Username
+        // Busca o utilizador e traz logo a informação se ele é Tutor ou Funcionario
         const utilizador = await prisma.utilizador.findFirst({
-            where: {
-                OR: [
-                    { email: username },
-                    { nome: username }
-                ]
+            where: { email: username },
+            include: {
+                tutor: true,
+                funcionario: true
             }
         });
         if (!utilizador) {
             return res.status(401).json({ error: 'Utilizador não encontrado!' });
         }
-        // 2.2 Verificar a password
         if (utilizador.password !== password) {
             return res.status(401).json({ error: 'A password está incorreta!' });
         }
-        // 2.3 Gerar o Token usando a chave primária correta (idUtilizador)
-        const token = jsonwebtoken_1.default.sign({ userId: utilizador.idUtilizador, role: role }, process.env.JWT_SECRET || 'chave_secreta_hotel_canino_2026', { expiresIn: '8h' });
-        res.status(200).json({ message: 'Login efetuado com sucesso!', token: token });
+        // O Backend descobre qual é a Role real da pessoa
+        let roleReal = 'Tutor'; // Assume que é Tutor por defeito
+        if (utilizador.funcionario) {
+            roleReal = utilizador.funcionario.perfil; // Pode ser 'Admin', 'Staff' ou 'Vet'
+        }
+        const token = jsonwebtoken_1.default.sign({ userId: utilizador.idUtilizador, role: roleReal }, process.env.JWT_SECRET || 'chave_secreta_hotel_canino_2026', { expiresIn: '8h' });
+        // Devolvemos o token, a Role e os DADOS PESSOAIS para o frontend!
+        res.status(200).json({
+            message: `Bem-vindo, ${utilizador.nome}!`,
+            token: token,
+            role: roleReal,
+            nome: utilizador.nome,
+            nif: utilizador.tutor ? utilizador.tutor.nif : '---',
+            telemovel: utilizador.tutor ? utilizador.tutor.contacto : '---'
+        });
     }
     catch (error) {
         console.error("Erro no Login:", error);
         res.status(500).json({ error: 'Erro interno ao validar o login.' });
+    }
+});
+// 3. ROTA DO DIÁRIO DE BORDO DO STAFF
+router.get('/animais/:idAnimal/historial', async (req, res) => {
+    const { idAnimal } = req.params;
+    try {
+        // Procura o animal e o seu diário de bordo na Base de Dados
+        const animal = await prisma.animal.findUnique({
+            where: { idAnimal: idAnimal },
+            include: {
+                diarioBordo: {
+                    orderBy: { timestamp: 'desc' } // Ordena do mais recente para o mais antigo
+                }
+            }
+        });
+        if (!animal) {
+            return res.status(404).json({ error: 'Animal não encontrado na base de dados.' });
+        }
+        // Formata os dados exatamente como o Frontend está à espera
+        const historial = {
+            idAnimal: animal.idAnimal,
+            nome: animal.nome,
+            estadoClinico: animal.estado,
+            diarioBordo: animal.diarioBordo.map((registo) => ({
+                dataHora: registo.timestamp,
+                descricao: registo.descricao,
+                fotoUrl: registo.fotos[0] || ''
+            }))
+        };
+        res.status(200).json(historial);
+    }
+    catch (error) {
+        console.error("Erro ao buscar historial:", error);
+        res.status(500).json({ error: 'Erro interno do servidor.' });
+    }
+});
+// 4. ROTA PARA LISTAR TODOS OS ANIMAIS
+router.get('/animais', async (req, res) => {
+    try {
+        const animais = await prisma.animal.findMany({
+            include: {
+                planoVacinal: true
+            }
+        });
+        res.status(200).json(animais);
+    }
+    catch (error) {
+        console.error("Erro ao listar animais:", error);
+        res.status(500).json({ error: 'Erro interno do servidor.' });
+    }
+});
+router.get('/animais/:idUser', async (req, res) => {
+    try {
+        const { idUser } = req.params;
+        const animais = await prisma.animal.findMany({
+            where: { tutorNif: idUser },
+            include: {
+                planoVacinal: true
+            }
+        });
+        res.status(200).json(animais);
+    }
+    catch (error) {
+        console.error("Erro ao listar animais:", error);
+        res.status(500).json({ error: 'Erro interno do servidor.' });
+    }
+});
+// 5. ROTA PARA CRIAR UM NOVO ANIMAL
+router.post('/animais', async (req, res) => {
+    const { nome, raca, tutorNif, microchip, estado, boletimVacinasUrl } = req.body;
+    try {
+        // Verificar se o tutor existe
+        const tutorExiste = await prisma.tutor.findUnique({
+            where: { nif: tutorNif }
+        });
+        if (!tutorExiste) {
+            return res.status(404).json({ error: 'Tutor não encontrado.' });
+        }
+        const novoAnimal = await prisma.animal.create({
+            data: {
+                nome: nome || 'Animal sem nome',
+                raca: raca || 'Raça desconhecida',
+                tutorNif: tutorNif,
+                microchip: microchip || `CHIP-${Date.now()}`, // Gera um único se não for fornecido
+                estado: estado || 'Saudavel',
+                reatividade: 'Normal',
+            }
+        });
+        res.status(201).json(novoAnimal);
+    }
+    catch (error) {
+        console.error("Erro ao criar animal:", error);
+        res.status(500).json({ error: 'Erro interno ao criar animal.' });
+    }
+});
+// 6. ROTA PARA LISTAR TODAS AS RESERVAS
+router.get('/reservas', async (req, res) => {
+    try {
+        const reservas = await prisma.reserva.findMany({
+            include: {
+                animal: true,
+                box: true,
+                servicos: true,
+                fatura: true
+            },
+            orderBy: { dataEntrada: 'desc' }
+        });
+        res.status(200).json(reservas);
+    }
+    catch (error) {
+        console.error("Erro ao listar reservas:", error);
+        res.status(500).json({ error: 'Erro interno do servidor.' });
+    }
+});
+// 7. ROTA PARA CRIAR UMA NOVA RESERVA
+router.post('/reservas', async (req, res) => {
+    const { data, dataEntrada, dataSaida, idAnimal, boxNumero, raca, reatividade, horaEntrega, horaLevantamento, banhos, tosquias, passeios, precoTotal } = req.body;
+    try {
+        // Verificar se o animal existe
+        const animalExiste = await prisma.animal.findUnique({
+            where: { idAnimal: idAnimal }
+        });
+        if (!animalExiste) {
+            return res.status(404).json({ error: 'Animal não encontrado.' });
+        }
+        // Se não houver box disponível, usar um padrão
+        const boxParaUsar = boxNumero || 1;
+        // Verificar se o box existe
+        const boxExiste = await prisma.box.findUnique({
+            where: { numero: boxParaUsar }
+        });
+        if (!boxExiste) {
+            return res.status(404).json({ error: 'Box não encontrado.' });
+        }
+        const inicio = dataEntrada ? new Date(dataEntrada) : data ? new Date(data) : null;
+        if (!inicio || isNaN(inicio.getTime())) {
+            return res.status(400).json({ error: 'Data de entrada inválida.' });
+        }
+        const fim = dataSaida ? new Date(dataSaida) : null;
+        if (!fim || isNaN(fim.getTime())) {
+            return res.status(400).json({ error: 'Data de saída inválida.' });
+        }
+        if (fim <= inicio) {
+            return res.status(400).json({ error: 'A data de saída deve ser posterior à data de entrada.' });
+        }
+        const novaReserva = await prisma.reserva.create({
+            data: {
+                dataEntrada: inicio,
+                dataSaida: fim,
+                valor: precoTotal || 0,
+                estado: 'Pendente',
+                animalId: idAnimal,
+                boxNumero: boxParaUsar
+                // Armazenar dados adicionais em comentário ou extensão futura
+            },
+            include: {
+                animal: true,
+                box: true,
+                servicos: true
+            }
+        });
+        console.log(banhos, " ", tosquias, " ", passeios);
+        // Se foram solicitados serviços, criá-los
+        if ((banhos && banhos > 0) || (tosquias && tosquias > 0) || (passeios && passeios > 0)) {
+            const servicosCriados = [];
+            if (banhos && banhos > 0) {
+                for (let i = 0; i < banhos; i++) {
+                    const servico = await prisma.servico.create({
+                        data: {
+                            data: new Date(),
+                            preco: 20,
+                            tipo: 'Adestramento',
+                            reservaId: novaReserva.idReserva
+                        }
+                    });
+                    servicosCriados.push(servico);
+                }
+            }
+            if (tosquias && tosquias > 0) {
+                for (let i = 0; i < tosquias; i++) {
+                    const servico = await prisma.servico.create({
+                        data: {
+                            data: new Date(),
+                            preco: 10,
+                            tipo: 'Grooming',
+                            reservaId: novaReserva.idReserva
+                        }
+                    });
+                    servicosCriados.push(servico);
+                }
+            }
+            if (passeios && passeios > 0) {
+                for (let i = 0; i < passeios; i++) {
+                    const servico = await prisma.servico.create({
+                        data: {
+                            data: new Date(),
+                            preco: 10,
+                            tipo: 'Passeio',
+                            reservaId: novaReserva.idReserva
+                        }
+                    });
+                    servicosCriados.push(servico);
+                }
+            }
+            console.log(servicosCriados);
+            novaReserva.servicos = servicosCriados;
+        }
+        res.status(201).json(novaReserva);
+    }
+    catch (error) {
+        console.error("Erro ao criar reserva:", error);
+        res.status(500).json({ error: 'Erro interno ao criar reserva.' });
+    }
+});
+// 8. ROTA PARA ELIMINAR UMA RESERVA
+router.delete('/reservas/:idReserva', async (req, res) => {
+    const { idReserva } = req.params;
+    try {
+        const reservaExiste = await prisma.reserva.findUnique({
+            where: { idReserva: idReserva }
+        });
+        if (!reservaExiste) {
+            return res.status(404).json({ error: 'Reserva não encontrada.' });
+        }
+        // Apagar primeiro os serviços associados
+        await prisma.servico.deleteMany({
+            where: { reservaId: idReserva }
+        });
+        // Depois apagar a reserva
+        const reservaApagada = await prisma.reserva.delete({
+            where: { idReserva: idReserva }
+        });
+        res.status(200).json({ message: 'Reserva eliminada com sucesso!', reserva: reservaApagada });
+    }
+    catch (error) {
+        console.error("Erro ao eliminar reserva:", error);
+        res.status(500).json({ error: 'Erro interno ao eliminar reserva.' });
     }
 });
 exports.default = router;
