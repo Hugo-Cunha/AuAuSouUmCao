@@ -299,7 +299,7 @@ const MarcacoesPage: React.FC = () => {
 
             {/* Reservas do dia */}
             <div className="marcacoes-do-dia">
-              <h3>Reservas neste interval - {countReservas}</h3>
+              <h3>Reservas neste intervalo - {countReservas}</h3>
 
               <h3>Reservas Minhas</h3>
               {reservasProprias.length > 0 ? (

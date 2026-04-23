@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import apiRoutes from './routes/api';
+import path from 'path';
 
 // Carregar variáveis de ambiente
 dotenv.config();
@@ -18,6 +19,7 @@ app.use(cors({
   credentials: true
 }));
 app.use(express.json());
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Rota principal de verificação de saúde (Health Check)
 app.get('/health', (req, res) => {

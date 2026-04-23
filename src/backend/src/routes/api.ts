@@ -1,9 +1,28 @@
 import { Router, Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import jwt from 'jsonwebtoken';
+import multer from 'multer'; 
+import fs from 'fs';         
 
 const router = Router();
 const prisma = new PrismaClient();
+
+if (!fs.existsSync('uploads')) {
+  fs.mkdirSync('uploads');
+}
+
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'uploads/')
+  },
+  filename: function (req, file, cb) {
+    // Adiciona um timestamp para evitar ficheiros com nomes repetidos
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9)
+    cb(null, uniqueSuffix + '-' + file.originalname)
+  }
+});
+const upload = multer({ storage: storage });
+
 
 // 1. ROTA DE REGISTO (CRIAR CONTA)
 router.post('/register', async (req: Request, res: Response) => {
@@ -25,11 +44,10 @@ router.post('/register', async (req: Request, res: Response) => {
         nome: username,
         email: email,
         password: password,
-        // O Prisma cria automaticamente a linha na tabela Tutor com estes dados!
         tutor: {
           create: {
             nif: nif,
-            contacto: telemovel // CORRIGIDO: A palavra exata do Prisma é "contacto"
+            contacto: telemovel 
           }
         }
       }
@@ -44,10 +62,9 @@ router.post('/register', async (req: Request, res: Response) => {
 
 // 2. ROTA DE LOGIN
 router.post('/login', async (req: Request, res: Response) => {
-  const { username, password } = req.body; // Já não recebemos a "role" do frontend!
+  const { username, password } = req.body; 
 
   try {
-    // Busca o utilizador e traz logo a informação se ele é Tutor ou Funcionario
     const utilizador = await prisma.utilizador.findFirst({
       where: { email: username },
       include: {
@@ -64,10 +81,9 @@ router.post('/login', async (req: Request, res: Response) => {
       return res.status(401).json({ error: 'A password está incorreta!' });
     }
 
-    // O Backend descobre qual é a Role real da pessoa
-    let roleReal = 'Tutor'; // Assume que é Tutor por defeito
+    let roleReal = 'Tutor'; 
     if (utilizador.funcionario) {
-      roleReal = utilizador.funcionario.perfil; // Pode ser 'Admin', 'Staff' ou 'Vet'
+      roleReal = utilizador.funcionario.perfil; 
     }
 
     const token = jwt.sign(
@@ -76,7 +92,6 @@ router.post('/login', async (req: Request, res: Response) => {
       { expiresIn: '8h' }
     );
 
-    // Devolvemos o token, a Role e os DADOS PESSOAIS para o frontend!
     res.status(200).json({ 
       message: `Bem-vindo, ${utilizador.nome}!`, 
       token: token,
@@ -91,17 +106,16 @@ router.post('/login', async (req: Request, res: Response) => {
   }
 });
 
-  // 3. ROTA DO DIÁRIO DE BORDO DO STAFF
+// 3. ROTA DO DIÁRIO DE BORDO DO STAFF
 router.get('/animais/:idAnimal/historial', async (req: Request, res: Response) => {
   const { idAnimal } = req.params;
 
   try {
-    // Procura o animal e o seu diário de bordo na Base de Dados
     const animal = await prisma.animal.findUnique({
       where: { idAnimal: idAnimal },
       include: {
         diarioBordo: {
-          orderBy: { timestamp: 'desc' } // Ordena do mais recente para o mais antigo
+          orderBy: { timestamp: 'desc' } 
         }
       }
     });
@@ -110,7 +124,6 @@ router.get('/animais/:idAnimal/historial', async (req: Request, res: Response) =
       return res.status(404).json({ error: 'Animal não encontrado na base de dados.' });
     }
 
-    // Formata os dados exatamente como o Frontend está à espera
     const historial = {
       idAnimal: animal.idAnimal,
       nome: animal.nome,
@@ -162,12 +175,12 @@ router.get('/animais/:idUser', async (req: Request, res: Response) => {
   }
 });
 
-// 5. ROTA PARA CRIAR UM NOVO ANIMAL
-router.post('/animais', async (req: Request, res: Response) => {
-  const { nome, raca, tutorNif, microchip, estado, boletimVacinasUrl } = req.body;
+// 5. ROTA PARA CRIAR UM NOVO ANIMAL (Agora com MULTER para o PDF)
+router.post('/animais', upload.single('vacinasFile'), async (req: Request, res: Response) => {
+  // O multer coloca os campos de texto no req.body e o ficheiro no req.file
+  const { nome, raca, tutorNif, microchip, estado, reatividade } = req.body;
 
   try {
-    // Verificar se o tutor existe
     const tutorExiste = await prisma.tutor.findUnique({
       where: { nif: tutorNif }
     });
@@ -176,15 +189,27 @@ router.post('/animais', async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Tutor não encontrado.' });
     }
 
+    // Verifica se recebemos um ficheiro PDF
+    const caminhoDocumento = req.file ? `/uploads/${req.file.filename}` : 'Sem documento';
 
     const novoAnimal = await prisma.animal.create({
       data: {
         nome: nome || 'Animal sem nome',
         raca: raca || 'Raça desconhecida',
         tutorNif: tutorNif,
-        microchip: microchip || `CHIP-${Date.now()}`, // Gera um único se não for fornecido
+        microchip: microchip || `CHIP-${Date.now()}`, 
         estado: estado || 'Saudavel',
-        reatividade: 'Normal',
+        reatividade: reatividade || 'Normal',
+        
+        // Magia do Prisma: Se houver ficheiro, cria logo o plano vacinal!
+        planoVacinal: req.file ? {
+          create: {
+            dataUltimaVacina: new Date(), // Podes ajustar isto futuramente para vir do form
+            documento: caminhoDocumento,
+            isValido: true,
+            estado: 'Valido'
+          }
+        } : undefined
       }
     });
 
@@ -220,17 +245,15 @@ router.post('/reservas', async (req: Request, res: Response) => {
   const { data, dataEntrada, dataSaida, idAnimal, boxNumero, raca, reatividade, horaEntrega, horaLevantamento, banhos, tosquias, passeios, precoTotal } = req.body;
 
   try {
-    // Verificar se o animal existe
     const animalExiste = await prisma.animal.findUnique({
       where: { idAnimal: idAnimal }
     });
     if (!animalExiste) {
       return res.status(404).json({ error: 'Animal não encontrado.' });
     }
-    // Se não houver box disponível, usar um padrão
+    
     const boxParaUsar = boxNumero || 1;
 
-    // Verificar se o box existe
     const boxExiste = await prisma.box.findUnique({
       where: { numero: boxParaUsar }
     });
@@ -261,7 +284,6 @@ router.post('/reservas', async (req: Request, res: Response) => {
         estado: 'Pendente',
         animalId: idAnimal,
         boxNumero: boxParaUsar
-        // Armazenar dados adicionais em comentário ou extensão futura
       },
       include: {
         animal: true,
@@ -269,9 +291,7 @@ router.post('/reservas', async (req: Request, res: Response) => {
         servicos: true
       }
     });
-    console.log(banhos, " ", tosquias, " ", passeios)
 
-    // Se foram solicitados serviços, criá-los
     if ((banhos && banhos > 0) || (tosquias && tosquias > 0) || (passeios && passeios > 0)) {
       const servicosCriados = [];
       
@@ -316,7 +336,6 @@ router.post('/reservas', async (req: Request, res: Response) => {
           servicosCriados.push(servico);
         }
       }
-      console.log(servicosCriados)  
       novaReserva.servicos = servicosCriados;
     }
 
@@ -340,12 +359,10 @@ router.delete('/reservas/:idReserva', async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Reserva não encontrada.' });
     }
 
-    // Apagar primeiro os serviços associados
     await prisma.servico.deleteMany({
       where: { reservaId: idReserva }
     });
 
-    // Depois apagar a reserva
     const reservaApagada = await prisma.reserva.delete({
       where: { idReserva: idReserva }
     });
