@@ -13,6 +13,7 @@ interface Animal {
   microchip: string;
   estado: string;
   tutorNif: string;
+  boletimVacinasUrl?: string;
 }
 
 interface Reserva {
@@ -39,6 +40,15 @@ const MarcacoesPage: React.FC = () => {
   const [reservas, setReservas] = useState<Reserva[]>([]);
   const [loading, setLoading] = useState(false);
   const [mostrarNovoFormulario, setMostrarNovoFormulario] = useState(false);
+
+  // Estados para novo animal
+  const [vacinasFile, setVacinasFile] = useState<File | null>(null);
+  const [racaCustomizada, setRacaCustomizada] = useState('');
+  
+  // Estados para serviços na reserva
+  const [banhos, setBanhos] = useState<number>(0);
+  const [tosquias, setTosquias] = useState<number>(0);
+  const [passeios, setPasseios] = useState<number>(0);
 
   // Dados do utilizador autenticado
   const utilizador = {
@@ -80,6 +90,7 @@ const MarcacoesPage: React.FC = () => {
     microchip: '',
     estado: 'Saudavel',
     tutorNif: utilizador.nif,
+    boletimVacinasUrl: '',
   });
 
   const handleNovoAnimalChange = (
@@ -97,13 +108,22 @@ const MarcacoesPage: React.FC = () => {
 
     try {
       const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+      const finalRaca = novoAnimal.raca === 'Outros' ? racaCustomizada : novoAnimal.raca;
       
-      const res = await axios.post(`${API_URL}/api/animais`, {
-        nome: novoAnimal.nome,
-        raca: novoAnimal.raca,
-        tutorNif: utilizador.nif,
-        microchip: novoAnimal.microchip || undefined,
-        estado: novoAnimal.estado,
+      const formData = new FormData();
+      formData.append('nome', novoAnimal.nome);
+      formData.append('raca', finalRaca);
+      formData.append('reatividade', novoAnimal.reatividade);
+      formData.append('tutorNif', utilizador.nif);
+      formData.append('microchip', novoAnimal.microchip || '');
+      formData.append('estado', novoAnimal.estado);
+      formData.append('boletimVacinasUrl', novoAnimal.boletimVacinasUrl || '');
+      if (vacinasFile) {
+        formData.append('vacinasFile', vacinasFile);
+      }
+
+      const res = await axios.post(`${API_URL}/api/animais`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
       });
 
       setAnimais([...animais, res.data]);
@@ -117,7 +137,9 @@ const MarcacoesPage: React.FC = () => {
         microchip: '',
         estado: 'Saudavel',
         tutorNif: utilizador.nif,
+        boletimVacinasUrl: '',
       });
+      setRacaCustomizada('');
     } catch (err) {
       console.error('Erro ao adicionar animal:', err);
       alert('Erro ao adicionar animal!');
@@ -125,6 +147,20 @@ const MarcacoesPage: React.FC = () => {
   };
 
   const animaisTutor = animais.filter((a) => a.tutorNif === utilizador.nif);
+
+  // Calcular preço total
+  const calcularPreco = () => {
+    const entrada = new Date(dataEntrada);
+    const saida = new Date(dataSaida);
+    const dias = (saida.getTime() - entrada.getTime()) / (1000 * 60 * 60 * 24);
+    
+    const precoEstadia = dias * 20; // 20€ por dia
+    const precoBanhos = banhos * 20; // 20€ por banho
+    const precoTosquias = tosquias * 10; // 10€ por tosquia
+    const precoPasseios = passeios * 10; // 10€ por passeio
+    
+    return precoEstadia + precoBanhos + precoTosquias + precoPasseios;
+  };
 
   const criarReserva = async () => {
     if (!dataEntrada || !dataSaida || !animalSelecionado) {
@@ -145,16 +181,25 @@ const MarcacoesPage: React.FC = () => {
         dataSaida,
         idAnimal: animalSelecionado.idAnimal,
         boxNumero: 1,
+        banhos: banhos,
+        tosquias: tosquias,
+        passeios: passeios
       });
 
       setReservas([...reservas, res.data]);
       alert('Reserva criada com sucesso!');
+      setAnimalSelecionado(null);
+      setBanhos(0);
+      setTosquias(0);
+      setPasseios(0);
     } catch (err: any) {
       console.error('Erro ao criar reserva:', err);
       const mensagem = err?.response?.data?.error || 'Erro ao criar reserva!';
       alert(mensagem);
     }
   };
+
+
 
   const apagarReserva = async (idReserva: string) => {
     try {
@@ -188,6 +233,13 @@ const MarcacoesPage: React.FC = () => {
         (entrada <= selecionadaEntrada && saida >= selecionadaSaida)
     );
   }).length;
+
+  const calcularMaxAdicionais = () => {
+    const entrada = new Date(dataEntrada);
+    const saida = new Date(dataSaida);
+    const dias = (saida.getTime() - entrada.getTime()) / (1000 * 60 * 60 * 24);
+    return Math.ceil(dias); // Permitir 1 tosquia por dia
+};
 
 
   if (loading) {
@@ -335,18 +387,55 @@ const MarcacoesPage: React.FC = () => {
                   </div>
                   <div className="form-group">
                     <label>Raça *</label>
-                    <input
-                      type="text"
+                    <select
                       name="raca"
                       value={novoAnimal.raca}
                       onChange={handleNovoAnimalChange}
-                      placeholder="ex: Labrador"
                       required
-                    />
+                    >
+                      <option value="">Selecione a raça</option>
+                      <option value="Labrador">Labrador</option>
+                      <option value="Poodle">Poodle</option>
+                      <option value="Bulldog">Bulldog</option>
+                      <option value="Pastor Alemão">Pastor Alemão</option>
+                      <option value="Golden Retriever">Golden Retriever</option>
+                      <option value="Beagle">Beagle</option>
+                      <option value="Dachshund">Dachshund</option>
+                      <option value="Pug">Pug</option>
+                      <option value="Shih Tzu">Shih Tzu</option>
+                      <option value="Outros">Outros</option>
+                    </select>
                   </div>
                 </div>
 
+                {novoAnimal.raca === 'Outros' && (
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label>Especifique a Raça</label>
+                      <input
+                        type="text"
+                        value={racaCustomizada}
+                        onChange={(e) => setRacaCustomizada(e.target.value)}
+                        placeholder="ex: Pinscher"
+                      />
+                    </div>
+                  </div>
+                )}
+
                 <div className="form-row">
+                  <div className="form-group">
+                    <label>Reatividade *</label>
+                    <select
+                      name="reatividade"
+                      value={novoAnimal.reatividade}
+                      onChange={handleNovoAnimalChange}
+                      required
+                    >
+                      <option value="">Selecione</option>
+                      <option value="Não Reativo">Não Reativo</option>
+                      <option value="Reativo">Reativo</option>
+                    </select>
+                </div>
                   <div className="form-group">
                     <label>Microchip</label>
                     <input
@@ -357,15 +446,17 @@ const MarcacoesPage: React.FC = () => {
                       placeholder="ex: 123456789"
                     />
                   </div>
+                </div>
+
+                <div className="form-row form-row-full">
                   <div className="form-group">
-                    <label>Reatividade</label>
+                    <label>Boletim de Vacinas (PDF)</label>
                     <input
-                      type="text"
-                      name="reatividade"
-                      value={novoAnimal.reatividade}
-                      onChange={handleNovoAnimalChange}
-                      placeholder="ex: Normal"
+                      type="file"
+                      accept=".pdf"
+                      onChange={(e) => setVacinasFile(e.target.files?.[0] || null)}
                     />
+                    {vacinasFile && <p className="file-info">✓ {vacinasFile.name}</p>}
                   </div>
                 </div>
 
@@ -377,9 +468,66 @@ const MarcacoesPage: React.FC = () => {
 
             {/* Botão para criar reserva */}
             {animalSelecionado && (
-              <button onClick={criarReserva} className="btn-criar-marcacao">
-                Confirmar Reserva para {animalSelecionado.nome}
-              </button>
+              <div className="detalhes-reserva-section">
+                <h3>Confirmar Reserva para {animalSelecionado.nome}</h3>
+                <p><strong>Período:</strong> {new Date(dataEntrada).toLocaleDateString('pt-PT')} até {new Date(dataSaida).toLocaleDateString('pt-PT')}</p>
+                <p><strong>Raça:</strong> {animalSelecionado.raca}</p>
+                <p><strong>Reatividade:</strong> {animalSelecionado.reatividade}</p>
+                
+                {/* Seleção de Serviços */}
+                <div className="servicos-section">
+                  <h4>Serviços Adicionais</h4>
+                  
+                  <div className="form-group">
+                    <label>Banhos (€20 cada)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      max={calcularMaxAdicionais()}
+                      value={banhos}
+                      onChange={(e) => setBanhos(Math.max(0, parseInt(e.target.value) || 0))}
+                      className="quantity-input"
+                    />
+                  </div>
+                  
+                  <div className="form-group">
+                    <label>Tosquias (€10 cada)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      max={calcularMaxAdicionais()}
+                      value={tosquias}
+                      onChange={(e) => setTosquias(Math.max(0, parseInt(e.target.value) || 0))}
+                      className="quantity-input"
+                    />
+                  </div>
+                  
+                  <div className="form-group">
+                    <label>Passeios (€10 cada)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      max={calcularMaxAdicionais()*2}
+                      value={passeios}
+                      onChange={(e) => setPasseios(Math.max(0, parseInt(e.target.value) || 0))}
+                      className="quantity-input"
+                    />
+                  </div>
+                </div>
+
+                {/* Resumo de Preço */}
+                <div className="preco-resumo">
+                  <p><strong>Estadia:</strong> {((new Date(dataSaida).getTime() - new Date(dataEntrada).getTime()) / (1000 * 60 * 60 * 24)).toFixed(1)} dias × €20 = €{(((new Date(dataSaida).getTime() - new Date(dataEntrada).getTime()) / (1000 * 60 * 60 * 24)) * 20).toFixed(2)}</p>
+                  <p><strong>Banhos:</strong> {banhos} × €20 = €{(banhos * 20).toFixed(2)}</p>
+                  <p><strong>Tosquias:</strong> {tosquias} × €10 = €{(tosquias * 10).toFixed(2)}</p>
+                  <p><strong>Passeios:</strong> {passeios} × €10 = €{(passeios * 10).toFixed(2)}</p>
+                  <p className="preco-total"><strong>Total: €{calcularPreco().toFixed(2)}</strong></p>
+                </div>
+
+                <button onClick={criarReserva} className="btn-criar-marcacao">
+                  Confirmar Reserva - €{calcularPreco().toFixed(2)}
+                </button>
+              </div>
             )}
           </section>
         </div>

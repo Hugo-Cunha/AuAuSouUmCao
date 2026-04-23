@@ -39,49 +39,51 @@ const DiarioBordoPage: React.FC = () => {
       {/* Ao passarmos a propriedade userData, ele entra no modo "Autenticado" */}
       <Header userData={user} />
 
-      <h2 style={{ textAlign: 'center', fontSize: '32px', fontWeight: 'lighter', margin: '20px 0' }}>Diário de Bordo</h2>
+      <div style={{ display: 'flex', flexDirection: 'column', flex: 1, width: '100%' }}>
+        <h2 style={{ textAlign: 'center', fontSize: '32px', fontWeight: 'lighter', margin: '20px 0' }}>Diário de Bordo</h2>
 
-      {/* 2. Card Detalhes do Animal */}
-      <section className="animal-info-card">
-        <div className="info-text-block">
-          <h2>Detalhes do Animal:</h2>
-          <p>Nome: {animalNome}</p>
-          <p>Estado: Saudável</p>
-          <p>To-do: Banho | Passeio ....</p>
-        </div>
-        <div className="info-text-block">
-          <p>Alimentação: Responsivo</p>
-          <p>Comportamento: Positivo</p>
-        </div>
-        <div className="animal-photo-circle">
-          <img src="https://images.unsplash.com/photo-1516734212448-1dd58be2cb56?w=200&q=80" alt="Pinscher" />
-        </div>
-      </section>
-
-      {/* 3. Área de Tarefas */}
-      <section className="tasks-container">
-        {diario.map((item, idx) => (
-          <div className="task-row" key={idx}>
-            <div className="task-text">
-              <h4>Tarefa: Passear -- {new Date(item.dataHora).toLocaleTimeString()} -- Comportamento: Positivo</h4>
-              <p>Nota: {item.descricao}</p>
-            </div>
-            {/* Indicador Neon: Verde para pares, Amarelo para ímpares */}
-            <div className="task-indicator" style={{ backgroundColor: idx % 2 === 0 ? '#39FF14' : '#FFE600' }}></div>
+        {/* 2. Card Detalhes do Animal */}
+        <section className="animal-info-card">
+          <div className="info-text-block">
+            <h2>Detalhes do Animal:</h2>
+            <p>Nome: {animalNome}</p>
+            <p>Estado: Saudável</p>
+            <p>To-do: Banho | Passeio ....</p>
           </div>
-        ))}
+          <div className="info-text-block">
+            <p>Alimentação: Responsivo</p>
+            <p>Comportamento: Positivo</p>
+          </div>
+          <div className="animal-photo-circle">
+            <img src="https://images.unsplash.com/photo-1516734212448-1dd58be2cb56?w=200&q=80" alt="Pinscher" />
+          </div>
+        </section>
 
-        <div className="action-buttons-row">
-          <button className="btn-pill">Adicionar Tarefa</button>
-          <button className="btn-pill">Adicionar Dias</button>
-        </div>
-      </section>
+        {/* 3. Área de Tarefas */}
+        <section className="tasks-container">
+          {diario.map((item, idx) => (
+            <div className="task-row" key={idx}>
+              <div className="task-text">
+                <h4>Tarefa: Passear -- {new Date(item.dataHora).toLocaleTimeString()} -- Comportamento: Positivo</h4>
+                <p>Nota: {item.descricao}</p>
+              </div>
+              {/* Indicador Neon: Verde para pares, Amarelo para ímpares */}
+              <div className="task-indicator" style={{ backgroundColor: idx % 2 === 0 ? '#39FF14' : '#FFE600' }}></div>
+            </div>
+          ))}
 
-      <a href="/tutor" className="btn-voltar">
-            Voltar
-      </a>
+          <div className="action-buttons-row">
+            <button className="btn-pill">Adicionar Tarefa</button>
+            <button className="btn-pill">Adicionar Dias</button>
+          </div>
+        </section>
 
-      <hr className="separator" style={{ width: '90%', margin: '20px auto', borderTop: '1px solid #CCCCCC' }} />
+        <a href="/tutor" className="btn-voltar">
+              Voltar
+        </a>
+
+        <hr className="separator" style={{ width: '90%', margin: '20px auto', borderTop: '1px solid #CCCCCC' }} />
+      </div>
 
       {/* 4. FOOTER PARTILHADO */}
       <Footer />

@@ -23,8 +23,6 @@
 
 .diario-page-container {
   width: 100%;
-  max-width: 1100px;
-  margin: 0 auto;
   background-color: #FFFFFF;
   display: flex;
   flex-direction: column;
@@ -40,6 +38,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-shrink: 0;
 }
 
 .info-text-block h2 {
@@ -76,8 +75,8 @@
   margin: 0 15px 20px 15px;
   display: flex;
   flex-direction: column;
-  max-height: 500px;
-  overflow-y: scroll;
+  flex: 1;
+  overflow-y: auto;
 }
 
 /* Custom Scrollbar */

@@ -164,7 +164,7 @@ router.get('/animais/:idUser', async (req: Request, res: Response) => {
 
 // 5. ROTA PARA CRIAR UM NOVO ANIMAL
 router.post('/animais', async (req: Request, res: Response) => {
-  const { nome, raca, tutorNif, microchip, estado } = req.body;
+  const { nome, raca, tutorNif, microchip, estado, boletimVacinasUrl } = req.body;
 
   try {
     // Verificar se o tutor existe
@@ -176,6 +176,7 @@ router.post('/animais', async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Tutor não encontrado.' });
     }
 
+
     const novoAnimal = await prisma.animal.create({
       data: {
         nome: nome || 'Animal sem nome',
@@ -183,7 +184,7 @@ router.post('/animais', async (req: Request, res: Response) => {
         tutorNif: tutorNif,
         microchip: microchip || `CHIP-${Date.now()}`, // Gera um único se não for fornecido
         estado: estado || 'Saudavel',
-        reatividade: 'Normal'
+        reatividade: 'Normal',
       }
     });
 
@@ -216,7 +217,7 @@ router.get('/reservas', async (req: Request, res: Response) => {
 
 // 7. ROTA PARA CRIAR UMA NOVA RESERVA
 router.post('/reservas', async (req: Request, res: Response) => {
-  const { data, dataEntrada, dataSaida, idAnimal, boxNumero } = req.body;
+  const { data, dataEntrada, dataSaida, idAnimal, boxNumero, raca, reatividade, horaEntrega, horaLevantamento, banhos, tosquias, passeios, precoTotal } = req.body;
 
   try {
     // Verificar se o animal existe
@@ -256,10 +257,11 @@ router.post('/reservas', async (req: Request, res: Response) => {
       data: {
         dataEntrada: inicio,
         dataSaida: fim,
-        valor: 0,
+        valor: precoTotal || 0,
         estado: 'Pendente',
         animalId: idAnimal,
         boxNumero: boxParaUsar
+        // Armazenar dados adicionais em comentário ou extensão futura
       },
       include: {
         animal: true,
@@ -267,6 +269,56 @@ router.post('/reservas', async (req: Request, res: Response) => {
         servicos: true
       }
     });
+    console.log(banhos, " ", tosquias, " ", passeios)
+
+    // Se foram solicitados serviços, criá-los
+    if ((banhos && banhos > 0) || (tosquias && tosquias > 0) || (passeios && passeios > 0)) {
+      const servicosCriados = [];
+      
+      if (banhos && banhos > 0) {
+        for (let i = 0; i < banhos; i++) {
+          const servico = await prisma.servico.create({
+            data: {
+              data: new Date(),
+              preco: 20,
+              tipo: 'Adestramento',
+              reservaId: novaReserva.idReserva
+            }
+          });
+          servicosCriados.push(servico);
+        }
+      }
+      
+      if (tosquias && tosquias > 0) {
+        for (let i = 0; i < tosquias; i++) {
+          const servico = await prisma.servico.create({
+            data: {
+              data: new Date(),
+              preco: 10,
+              tipo: 'Grooming',
+              reservaId: novaReserva.idReserva
+            }
+          });
+          servicosCriados.push(servico);
+        }
+      }
+      
+      if (passeios && passeios > 0) {
+        for (let i = 0; i < passeios; i++) {
+          const servico = await prisma.servico.create({
+            data: {
+              data: new Date(),
+              preco: 10,
+              tipo: 'Passeio',
+              reservaId: novaReserva.idReserva
+            }
+          });
+          servicosCriados.push(servico);
+        }
+      }
+      console.log(servicosCriados)  
+      novaReserva.servicos = servicosCriados;
+    }
 
     res.status(201).json(novaReserva);
   } catch (error) {
