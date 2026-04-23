@@ -124,6 +124,8 @@ const MarcacoesPage: React.FC = () => {
     }
   };
 
+  const animaisTutor = animais.filter((a) => a.tutorNif === utilizador.nif);
+
   const criarReserva = async () => {
     if (!dataEntrada || !dataSaida || !animalSelecionado) {
       alert('Por favor, selecione o intervalo e o animal!');
@@ -166,11 +168,27 @@ const MarcacoesPage: React.FC = () => {
     }
   };
 
+  const datanormal = (data: string) => {
+    const d = new Date(data);
+    return d.toLocaleDateString('pt-PT');
+  }
+
+  const reservasProprias = reservas.filter((r) => r.animal.tutorNif === utilizador.nif);
+
   // Filtrar reservas no intervalo selecionado
-  const reservasPeriodo = reservas.filter((r) => {
-    const dataReserva = new Date(r.dataEntrada).toISOString().split('T')[0];
-    return dataReserva >= dataEntrada && dataReserva <= dataSaida;
-  });
+  const countReservas = reservas.filter((r) => {
+    const entrada = new Date(r.dataEntrada);
+    const saida = new Date(r.dataSaida);
+    const selecionadaEntrada = new Date(dataEntrada);
+    const selecionadaSaida = new Date(dataSaida);
+    
+    return (
+        (entrada >= selecionadaEntrada && entrada < selecionadaSaida) ||
+        (saida > selecionadaEntrada && saida <= selecionadaSaida) ||
+        (entrada <= selecionadaEntrada && saida >= selecionadaSaida)
+    );
+  }).length;
+
 
   if (loading) {
     return (
@@ -187,8 +205,12 @@ const MarcacoesPage: React.FC = () => {
       <Header userData={utilizador} />
 
       <main className="marcacoes-main">
+        <div>
+        <a href="/tutor" className="btn-voltar">
+          Voltar
+        </a>
         <h1 className="page-title">Minhas Marcações</h1>
-
+    </div>
         <div className="marcacoes-content">
           {/* PARTE 1: SELEÇÃO DE DATA */}
           <section className="secao-calendario">
@@ -225,14 +247,17 @@ const MarcacoesPage: React.FC = () => {
 
             {/* Reservas do dia */}
             <div className="marcacoes-do-dia">
-              <h3>Reservas neste intervalo</h3>
-              {reservasPeriodo.length > 0 ? (
+              <h3>Reservas neste interval - {countReservas}</h3>
+
+              <h3>Reservas Minhas</h3>
+              {reservasProprias.length > 0 ? (
                 <ul className="marcacoes-lista">
-                  {reservasPeriodo.map((reserva) => (
+                  {reservasProprias.map((reserva) => (
                     <li key={reserva.idReserva} className="marcacao-item">
                       <div>
                         <span>{reserva.animal.nome}</span>
                         <p className="estado-reserva">{reserva.estado}</p>
+                        <p className="reserva-descricao">Data Entrada: {datanormal(reserva.dataEntrada)} e Data Saida: {datanormal(reserva.dataSaida)}</p>
                       </div>
                       <button
                         onClick={() => apagarReserva(reserva.idReserva)}
@@ -257,9 +282,9 @@ const MarcacoesPage: React.FC = () => {
 
             <div className="cao-selector">
               <h3>Animais Registados</h3>
-              {animais.length > 0 ? (
+              {animaisTutor.length > 0 ? (
                 <div className="caos-grid">
-                  {animais.map((animal) => (
+                  {animaisTutor.map((animal) => (
                     <div
                       key={animal.idAnimal}
                       className={`cao-card ${animalSelecionado?.idAnimal === animal.idAnimal ? 'ativo' : ''}`}

@@ -1,5 +1,26 @@
 /* ==================== DIÁRIO DE BORDO PAGE ==================== */
 
+.btn-voltar {
+  display: block;
+  margin: 20px auto;
+  width: 120px;
+  text-align: center;
+  padding: 10px 24px;
+  background-color: #7c3aed;
+  color: #ffffff;
+  border-radius: 20px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 14px;
+  transition: background-color 0.3s ease;
+  border: none;
+  cursor: pointer;
+}
+
+.btn-voltar:hover {
+  background-color: #6d28d9;
+}
+
 .diario-page-container {
   width: 100%;
   max-width: 1100px;
@@ -110,3 +131,15 @@
 }
 
 .btn-pill:hover { opacity: 0.8; }
+
+.btn-voltar {
+  display: inline-block;
+  margin-bottom: 20px;
+  padding: 10px 15px;
+  background-color: #e0e0e0;
+  color: #333;
+  border-radius: 6px;
+  text-decoration: none;
+  font-size: 14px;
+  transition: background-color 0.3s ease;
+}

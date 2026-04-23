@@ -95,6 +95,18 @@
 .social-icons { display: flex; gap: 8px; }
 .social-icon { width: 30px; height: 30px; cursor: pointer; border-radius: 6px;}
 
+.btn-voltar {
+  display: inline-block;
+  margin-bottom: 20px;
+  padding: 10px 15px;
+  background-color: #d02411fb;
+  color: #333;
+  border-radius: 6px;
+  text-decoration: none;
+  font-size: 14px;
+  transition: background-color 0.3s ease;
+}
+
 /* RESPONSIVE HEADER/FOOTER */
 @media (max-width: 768px) {
   .site-header { padding: 0 20px; height: 64px; }

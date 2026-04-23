@@ -145,6 +145,23 @@ router.get('/animais', async (req: Request, res: Response) => {
   }
 });
 
+router.get('/animais/:idUser', async (req: Request, res: Response) => {
+  try {
+    const { idUser } = req.params;
+    const animais = await prisma.animal.findMany({
+      where: { tutorNif: idUser },
+      include: {
+        planoVacinal: true
+      }
+    });
+
+    res.status(200).json(animais);
+  } catch (error) {
+    console.error("Erro ao listar animais:", error);
+    res.status(500).json({ error: 'Erro interno do servidor.' });
+  }
+});
+
 // 5. ROTA PARA CRIAR UM NOVO ANIMAL
 router.post('/animais', async (req: Request, res: Response) => {
   const { nome, raca, tutorNif, microchip, estado } = req.body;
