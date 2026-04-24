@@ -14,7 +14,7 @@ const PORT = process.env.PORT || 3000;
 app.use(cors({
   origin: [
     'http://localhost:5173', // Para quando testares no teu PC com o Vite
-    'https://main.dgvaudjmhakvj.amplifyapp.com' // <-- RETIRADA A BARRA NO FIM
+    'https://main.dgvaudjmhakvj.amplifyapp.com' 
   ],
   credentials: true
 }));

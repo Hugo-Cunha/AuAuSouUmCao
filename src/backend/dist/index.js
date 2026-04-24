@@ -7,6 +7,7 @@ const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
 const dotenv_1 = __importDefault(require("dotenv"));
 const api_1 = __importDefault(require("./routes/api"));
+const path_1 = __importDefault(require("path"));
 // Carregar variáveis de ambiente
 dotenv_1.default.config();
 const app = (0, express_1.default)();
@@ -15,11 +16,12 @@ const PORT = process.env.PORT || 3000;
 app.use((0, cors_1.default)({
     origin: [
         'http://localhost:5173', // Para quando testares no teu PC com o Vite
-        'https://main.dgvaudjmhakvj.amplifyapp.com' // <-- RETIRADA A BARRA NO FIM
+        'https://main.dgvaudjmhakvj.amplifyapp.com'
     ],
     credentials: true
 }));
 app.use(express_1.default.json());
+app.use('/uploads', express_1.default.static(path_1.default.join(__dirname, '../uploads')));
 // Rota principal de verificação de saúde (Health Check)
 app.get('/health', (req, res) => {
     res.status(200).json({ status: 'OK', mensagem: 'Servidor AuAuSouUmCão a correr!' });

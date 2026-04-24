@@ -1,7 +1,8 @@
 import { Router, Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import jwt from 'jsonwebtoken';
-import multer from 'multer'; 
+// @ts-ignore
+import multer from 'multer';
 import fs from 'fs';         
 
 const router = Router();
@@ -12,10 +13,10 @@ if (!fs.existsSync('uploads')) {
 }
 
 const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
+  destination: function (req: any, file: any, cb: any) {
     cb(null, 'uploads/')
   },
-  filename: function (req, file, cb) {
+  filename: function (req: any, file: any, cb: any) {
     // Adiciona um timestamp para evitar ficheiros com nomes repetidos
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9)
     cb(null, uniqueSuffix + '-' + file.originalname)
@@ -177,8 +178,10 @@ router.get('/animais/:idUser', async (req: Request, res: Response) => {
 
 // 5. ROTA PARA CRIAR UM NOVO ANIMAL (Agora com MULTER para o PDF)
 router.post('/animais', upload.single('vacinasFile'), async (req: Request, res: Response) => {
-  // O multer coloca os campos de texto no req.body e o ficheiro no req.file
   const { nome, raca, tutorNif, microchip, estado, reatividade } = req.body;
+  
+  // Extraímos o ficheiro forçando o tipo para evitar erros do TypeScript
+  const uploadedFile = (req as any).file; 
 
   try {
     const tutorExiste = await prisma.tutor.findUnique({
@@ -189,8 +192,8 @@ router.post('/animais', upload.single('vacinasFile'), async (req: Request, res: 
       return res.status(404).json({ error: 'Tutor não encontrado.' });
     }
 
-    // Verifica se recebemos um ficheiro PDF
-    const caminhoDocumento = req.file ? `/uploads/${req.file.filename}` : 'Sem documento';
+    // Verifica se recebemos um ficheiro PDF usando a variável segura 'uploadedFile'
+    const caminhoDocumento = uploadedFile ? `/uploads/${uploadedFile.filename}` : 'Sem documento';
 
     const novoAnimal = await prisma.animal.create({
       data: {
@@ -202,9 +205,9 @@ router.post('/animais', upload.single('vacinasFile'), async (req: Request, res: 
         reatividade: reatividade || 'Normal',
         
         // Magia do Prisma: Se houver ficheiro, cria logo o plano vacinal!
-        planoVacinal: req.file ? {
+        planoVacinal: uploadedFile ? {
           create: {
-            dataUltimaVacina: new Date(), // Podes ajustar isto futuramente para vir do form
+            dataUltimaVacina: new Date(), 
             documento: caminhoDocumento,
             isValido: true,
             estado: 'Valido'
