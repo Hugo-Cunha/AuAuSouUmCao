@@ -225,7 +225,16 @@ router.get('/reservas', async (req: Request, res: Response) => {
   try {
     const reservas = await prisma.reserva.findMany({
       include: {
-        animal: true,
+        animal: {
+          include: {
+            tutor: {
+              include: {
+                utilizador: true // A MAGIA AQUI: Traz o nome do Dono!
+              }
+            },
+            planoVacinal: true // Aproveitamos e garantimos que os PDFs vêm sempre
+          }
+        },
         box: true,
         servicos: true,
         fatura: true
@@ -372,6 +381,58 @@ router.delete('/reservas/:idReserva', async (req: Request, res: Response) => {
     console.error("Erro ao eliminar reserva:", error);
     res.status(500).json({ error: 'Erro interno ao eliminar reserva.' });
   }
+
+  // 9. ROTA PARA A RECEÇÃO: EFETUAR CHECK-IN E VALIDAR VACINAS
+router.patch('/reservas/:idReserva/checkin', async (req: Request, res: Response) => {
+  const { idReserva } = req.params;
+
+  try {
+    const reservaExistente = await prisma.reserva.findUnique({
+      where: { idReserva: idReserva },
+      include: { animal: { include: { planoVacinal: true } } }
+    });
+
+    if (!reservaExistente) return res.status(404).json({ error: 'Reserva não encontrada.' });
+    if (reservaExistente.estado !== 'Pendente') return res.status(400).json({ error: 'A reserva já não se encontra pendente.' });
+
+    const reservaAtualizada = await prisma.reserva.update({
+      where: { idReserva: idReserva },
+      data: { estado: 'CheckIn' }
+    });
+
+    if (reservaExistente.animal.planoVacinal) {
+      await prisma.planoVacinal.update({
+        where: { animalId: reservaExistente.animal.idAnimal },
+        data: { isValido: true }
+      });
+    }
+
+    res.status(200).json({ message: 'Check-in efetuado e vacinas validadas com sucesso!', reserva: reservaAtualizada });
+  } catch (error) {
+    console.error("Erro ao efetuar check-in:", error);
+    res.status(500).json({ error: 'Erro interno ao efetuar check-in.' });
+  }
+});
+
+// 10. ROTA PARA EFETUAR CHECK-OUT (PAGAR)
+router.patch('/reservas/:idReserva/checkout', async (req: Request, res: Response) => {
+  const { idReserva } = req.params;
+
+  try {
+    const reservaExistente = await prisma.reserva.findUnique({ where: { idReserva } });
+    if (!reservaExistente) return res.status(404).json({ error: 'Reserva não encontrada.' });
+
+    const reservaAtualizada = await prisma.reserva.update({
+      where: { idReserva: idReserva },
+      data: { estado: 'CheckOut' } // <-- Usamos o CheckOut do teu Enum do Prisma!
+    });
+
+    res.status(200).json({ message: 'Check-out efetuado e pago!', reserva: reservaAtualizada });
+  } catch (error) {
+    console.error("Erro ao efetuar check-out:", error);
+    res.status(500).json({ error: 'Erro interno ao efetuar check-out.' });
+  }
+});
 });
 
 export default router;

@@ -12,6 +12,7 @@ enum TipoPerfil {
   Admin
   Vet
   Staff
+  Rececao
 }
 
 enum EstadoVacina {

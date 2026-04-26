@@ -1,0 +1,108 @@
+.rececao-page {
+  background-color: #E0E0E0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Tabs Navigation */
+.tabs-bar {
+  display: flex;
+  background-color: #DDDDDD;
+  height: 50px;
+  border-bottom: 1px solid #AAAAAA;
+}
+
+.tab-btn {
+  flex: 1;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  color: #1A1A1A;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.tab-btn.active {
+  background-color: #BBBBBB;
+  font-weight: bold;
+  border-radius: 20px;
+  margin: 5px;
+  height: 40px;
+}
+
+.tab-separator {
+  width: 1px;
+  height: 100%;
+  background-color: #AAAAAA;
+}
+
+/* Layout Principal */
+.rececao-content {
+  display: flex;
+  padding: 25px;
+  gap: 20px;
+}
+
+/* Coluna Filtros */
+.filters-col {
+  width: 110px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.filter-label { font-weight: bold; font-size: 18px; }
+.btn-filter {
+  background-color: #BBBBBB;
+  border-radius: 8px;
+  border: none;
+  padding: 8px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+/* Card Branco */
+.rececao-card {
+  background: #FFFFFF;
+  border-radius: 16px;
+  padding: 25px 30px;
+  flex: 1;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.rececao-card h2 { font-size: 22px; margin-bottom: 20px; font-weight: normal; }
+
+/* Tabela Estilizada */
+.rececao-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 20px;
+}
+
+.rececao-table th, .rececao-table td {
+  border: 1px solid #DDDDDD;
+  padding: 12px;
+  text-align: center;
+  font-size: 15px;
+}
+
+.rececao-table th { background-color: #FFFFFF; font-weight: normal; }
+
+/* Botões S/N e Pagar */
+.btn-s { background-color: #2ECC71; color: white; border-radius: 20px; width: 45px; height: 30px; border: none; font-weight: bold; cursor: pointer; }
+.btn-n { background-color: #E74C3C; color: white; border-radius: 20px; width: 45px; height: 30px; border: none; font-weight: bold; cursor: pointer; }
+.btn-pagar { background-color: #00FF00; color: #1A1A1A; border-radius: 20px; padding: 10px 30px; border: none; font-weight: bold; cursor: pointer; }
+
+/* Faturação Sub-page */
+.billing-bar {
+  background-color: #BBBBBB;
+  border-radius: 20px;
+  width: fit-content;
+  padding: 10px 40px;
+  margin: 20px auto;
+  font-weight: bold;
+}

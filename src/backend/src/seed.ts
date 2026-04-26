@@ -41,6 +41,18 @@ async function main() {
     }
   });
 
+  // 4. A Rececionista (NOVA CONTA!)
+  await prisma.utilizador.upsert({
+    where: { email: 'rececao@auau.pt' },
+    update: {},
+    create: {
+      nome: 'Marta Rececionista',
+      email: 'rececao@auau.pt',
+      password: 'password123',
+      funcionario: { create: { perfil: 'Rececao' } }
+    }
+  });
+
   await prisma.box.upsert({
     where: { numero: 1 },
     update: {},

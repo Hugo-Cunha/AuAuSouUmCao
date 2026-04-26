@@ -35,6 +35,8 @@ const LoginPage: React.FC = () => {
         navigate('/gestao');
       } else if (role === 'Staff' || role === 'Vet') {
         navigate('/staff');
+      } else if (role === 'Rececao') { // <-- ADICIONA ISTO
+        navigate('/rececao');
       } else {
         navigate('/tutor'); 
       }
