@@ -17,7 +17,6 @@ const storage = multer.diskStorage({
     cb(null, 'uploads/')
   },
   filename: function (req: any, file: any, cb: any) {
-    // Adiciona um timestamp para evitar ficheiros com nomes repetidos
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9)
     cb(null, uniqueSuffix + '-' + file.originalname)
   }
@@ -30,7 +29,6 @@ router.post('/register', async (req: Request, res: Response) => {
   const { username, email, nif, telemovel, password } = req.body;
 
   try {
-    // 1.1 Verificar se o utilizador já existe (Apenas pelo email na tabela Utilizador)
     const utilizadorExistente = await prisma.utilizador.findFirst({
       where: { email: email }
     });
@@ -39,7 +37,6 @@ router.post('/register', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Já existe uma conta com este Email!' });
     }
 
-    // 1.2 Criar o utilizador e passar o NIF e Contacto para a tabela Tutor
     const novoUtilizador = await prisma.utilizador.create({
       data: {
         nome: username,
@@ -176,11 +173,9 @@ router.get('/animais/:idUser', async (req: Request, res: Response) => {
   }
 });
 
-// 5. ROTA PARA CRIAR UM NOVO ANIMAL (Agora com MULTER para o PDF)
+// 5. ROTA PARA CRIAR UM NOVO ANIMAL
 router.post('/animais', upload.single('vacinasFile'), async (req: Request, res: Response) => {
   const { nome, raca, tutorNif, microchip, estado, reatividade } = req.body;
-  
-  // Extraímos o ficheiro forçando o tipo para evitar erros do TypeScript
   const uploadedFile = (req as any).file; 
 
   try {
@@ -192,7 +187,6 @@ router.post('/animais', upload.single('vacinasFile'), async (req: Request, res: 
       return res.status(404).json({ error: 'Tutor não encontrado.' });
     }
 
-    // Verifica se recebemos um ficheiro PDF usando a variável segura 'uploadedFile'
     const caminhoDocumento = uploadedFile ? `/uploads/${uploadedFile.filename}` : 'Sem documento';
 
     const novoAnimal = await prisma.animal.create({
@@ -204,13 +198,13 @@ router.post('/animais', upload.single('vacinasFile'), async (req: Request, res: 
         estado: estado || 'Saudavel',
         reatividade: reatividade || 'Normal',
         
-        // Magia do Prisma: Se houver ficheiro, cria logo o plano vacinal!
+        // CORREÇÃO: O PDF começa SEMPRE como isValido: false
         planoVacinal: uploadedFile ? {
           create: {
             dataUltimaVacina: new Date(), 
             documento: caminhoDocumento,
-            isValido: true,
-            estado: 'Valido'
+            isValido: false,
+            estado: 'Valido' // 'Valido' aqui refere-se ao EstadoVacina do teu Prisma
           }
         } : undefined
       }
@@ -232,10 +226,10 @@ router.get('/reservas', async (req: Request, res: Response) => {
           include: {
             tutor: {
               include: {
-                utilizador: true // A MAGIA AQUI: Traz o nome do Dono!
+                utilizador: true
               }
             },
-            planoVacinal: true // Aproveitamos e garantimos que os PDFs vêm sempre
+            planoVacinal: true
           }
         },
         box: true,
@@ -254,39 +248,26 @@ router.get('/reservas', async (req: Request, res: Response) => {
 
 // 7. ROTA PARA CRIAR UMA NOVA RESERVA
 router.post('/reservas', async (req: Request, res: Response) => {
-  const { data, dataEntrada, dataSaida, idAnimal, boxNumero, raca, reatividade, horaEntrega, horaLevantamento, banhos, tosquias, passeios, precoTotal } = req.body;
+  const { data, dataEntrada, dataSaida, idAnimal, boxNumero, banhos, tosquias, passeios, precoTotal } = req.body;
 
   try {
     const animalExiste = await prisma.animal.findUnique({
       where: { idAnimal: idAnimal }
     });
-    if (!animalExiste) {
-      return res.status(404).json({ error: 'Animal não encontrado.' });
-    }
+    if (!animalExiste) return res.status(404).json({ error: 'Animal não encontrado.' });
     
     const boxParaUsar = boxNumero || 1;
-
     const boxExiste = await prisma.box.findUnique({
       where: { numero: boxParaUsar }
     });
-
-    if (!boxExiste) {
-      return res.status(404).json({ error: 'Box não encontrado.' });
-    }
+    if (!boxExiste) return res.status(404).json({ error: 'Box não encontrada.' });
 
     const inicio = dataEntrada ? new Date(dataEntrada) : data ? new Date(data) : null;
-    if (!inicio || isNaN(inicio.getTime())) {
-      return res.status(400).json({ error: 'Data de entrada inválida.' });
-    }
-
     const fim = dataSaida ? new Date(dataSaida) : null;
-    if (!fim || isNaN(fim.getTime())) {
-      return res.status(400).json({ error: 'Data de saída inválida.' });
-    }
-
-    if (fim <= inicio) {
-      return res.status(400).json({ error: 'A data de saída deve ser posterior à data de entrada.' });
-    }
+    
+    if (!inicio || isNaN(inicio.getTime())) return res.status(400).json({ error: 'Data de entrada inválida.' });
+    if (!fim || isNaN(fim.getTime())) return res.status(400).json({ error: 'Data de saída inválida.' });
+    if (fim <= inicio) return res.status(400).json({ error: 'A data de saída deve ser posterior à data de entrada.' });
 
     const novaReserva = await prisma.reserva.create({
       data: {
@@ -310,40 +291,23 @@ router.post('/reservas', async (req: Request, res: Response) => {
       if (banhos && banhos > 0) {
         for (let i = 0; i < banhos; i++) {
           const servico = await prisma.servico.create({
-            data: {
-              data: new Date(),
-              preco: 20,
-              tipo: 'Adestramento',
-              reservaId: novaReserva.idReserva
-            }
+            data: { data: new Date(), preco: 20, tipo: 'Adestramento', reservaId: novaReserva.idReserva }
           });
           servicosCriados.push(servico);
         }
       }
-      
       if (tosquias && tosquias > 0) {
         for (let i = 0; i < tosquias; i++) {
           const servico = await prisma.servico.create({
-            data: {
-              data: new Date(),
-              preco: 10,
-              tipo: 'Grooming',
-              reservaId: novaReserva.idReserva
-            }
+            data: { data: new Date(), preco: 10, tipo: 'Grooming', reservaId: novaReserva.idReserva }
           });
           servicosCriados.push(servico);
         }
       }
-      
       if (passeios && passeios > 0) {
         for (let i = 0; i < passeios; i++) {
           const servico = await prisma.servico.create({
-            data: {
-              data: new Date(),
-              preco: 10,
-              tipo: 'Passeio',
-              reservaId: novaReserva.idReserva
-            }
+            data: { data: new Date(), preco: 10, tipo: 'Passeio', reservaId: novaReserva.idReserva }
           });
           servicosCriados.push(servico);
         }
@@ -384,8 +348,9 @@ router.delete('/reservas/:idReserva', async (req: Request, res: Response) => {
     console.error("Erro ao eliminar reserva:", error);
     res.status(500).json({ error: 'Erro interno ao eliminar reserva.' });
   }
+}); // <-- CORREÇÃO: O fecho da Rota 8 acaba exatamente aqui!
 
-  // 9. ROTA PARA A RECEÇÃO: EFETUAR CHECK-IN E VALIDAR VACINAS
+// 9. ROTA PARA A RECEÇÃO: EFETUAR CHECK-IN E VALIDAR VACINAS
 router.patch('/reservas/:idReserva/checkin', async (req: Request, res: Response) => {
   const { idReserva } = req.params;
 
@@ -427,7 +392,7 @@ router.patch('/reservas/:idReserva/checkout', async (req: Request, res: Response
 
     const reservaAtualizada = await prisma.reserva.update({
       where: { idReserva: idReserva },
-      data: { estado: 'CheckOut' } // <-- Usamos o CheckOut do teu Enum do Prisma!
+      data: { estado: 'CheckOut' } 
     });
 
     res.status(200).json({ message: 'Check-out efetuado e pago!', reserva: reservaAtualizada });
@@ -436,6 +401,25 @@ router.patch('/reservas/:idReserva/checkout', async (req: Request, res: Response
     res.status(500).json({ error: 'Erro interno ao efetuar check-out.' });
   }
 });
+
+// 11. NOVA ROTA: PARA RECUSAR/CANCELAR RESERVA (Botão "N")
+router.patch('/reservas/:idReserva/cancelar', async (req: Request, res: Response) => {
+  const { idReserva } = req.params;
+
+  try {
+    const reservaExistente = await prisma.reserva.findUnique({ where: { idReserva } });
+    if (!reservaExistente) return res.status(404).json({ error: 'Reserva não encontrada.' });
+
+    const reservaAtualizada = await prisma.reserva.update({
+      where: { idReserva: idReserva },
+      data: { estado: 'Cancelada' } 
+    });
+
+    res.status(200).json({ message: 'Reserva cancelada com sucesso!', reserva: reservaAtualizada });
+  } catch (error) {
+    console.error("Erro ao cancelar reserva:", error);
+    res.status(500).json({ error: 'Erro interno ao cancelar reserva.' });
+  }
 });
 
 export default router;

@@ -23,7 +23,7 @@ interface Reserva {
 const RececaoPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'IN' | 'OUT'>('IN');
   const [showBilling, setShowBilling] = useState(false);
-  const [reservaParaPagar, setReservaParaPagar] = useState<string | null>(null); // NOVO
+  const [reservaParaPagar, setReservaParaPagar] = useState<string | null>(null);
   const [reservas, setReservas] = useState<Reserva[]>([]);
   
   const funcionario = { 
@@ -43,17 +43,25 @@ const RececaoPage: React.FC = () => {
     fetchData();
   }, [activeTab]);
 
+  // CORREÇÃO: Função atualizada com try/catch e a Rota de Cancelar!
   const handleCheckInAction = async (id: string, accept: boolean) => {
-    if (accept) {
-      await axios.patch(`${API_URL}/api/reservas/${id}/checkin`);
-      alert("Check-In realizado!");
-    } else {
-      alert("Reserva recusada/cancelada.");
+    try {
+      if (accept) {
+        // Botão "S"
+        await axios.patch(`${API_URL}/api/reservas/${id}/checkin`);
+        alert("Check-In realizado com sucesso!");
+      } else {
+        // Botão "N" - Agora avisa a BD!
+        await axios.patch(`${API_URL}/api/reservas/${id}/cancelar`);
+        alert("Reserva cancelada e removida da lista.");
+      }
+      fetchData(); // Atualiza a tabela imediatamente
+    } catch (err: any) {
+      console.error(err);
+      alert(err.response?.data?.error || "Ocorreu um erro no servidor ao processar a ação.");
     }
-    fetchData();
   };
 
-  // NOVA FUNÇÃO DE PAGAMENTO
   const handleFinalizarPagamento = async () => {
     if (!reservaParaPagar) return;
     try {
@@ -61,7 +69,7 @@ const RececaoPage: React.FC = () => {
       alert("Pagamento e Check-OUT concluídos com sucesso!");
       setShowBilling(false);
       setReservaParaPagar(null);
-      fetchData(); // Atualiza a tabela (o cão desaparece do Check-OUT ativo)
+      fetchData(); 
     } catch (err: any) {
       alert(err.response?.data?.error || "Erro ao finalizar pagamento.");
     }
@@ -150,14 +158,13 @@ const RececaoPage: React.FC = () => {
                   ) : (
                     <>
                       <td>{r.animal.nome}</td>
-                      {/* O NOME DO DONO APARECE AQUI AGORA: */}
                       <td>{r.animal.tutor?.utilizador?.nome || 'Dono não encontrado'}</td>
                       <td>{new Date(r.dataSaida).toLocaleDateString()}</td>
                       <td>
                         <button 
                           className="btn-pagar" 
                           onClick={() => {
-                            setReservaParaPagar(r.idReserva); // Guarda o ID do cão a pagar
+                            setReservaParaPagar(r.idReserva); 
                             setShowBilling(true);
                           }}
                         >
