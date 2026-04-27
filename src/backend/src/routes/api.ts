@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { EstadoReserva, PrismaClient } from '@prisma/client';
 import jwt from 'jsonwebtoken';
 // @ts-ignore
 import multer from 'multer';
@@ -122,6 +122,15 @@ router.get('/animais/:idAnimal/historial', async (req: Request, res: Response) =
       return res.status(404).json({ error: 'Animal não encontrado na base de dados.' });
     }
 
+    const reservaAnimal = await prisma.reserva.findFirst({
+      where: { animalId: idAnimal},
+      include: {
+        servicos: {
+          orderBy: { data: 'asc' }
+        }
+      }
+    })
+
     const historial = {
       idAnimal: animal.idAnimal,
       nome: animal.nome,
@@ -130,7 +139,8 @@ router.get('/animais/:idAnimal/historial', async (req: Request, res: Response) =
         dataHora: registo.timestamp,
         descricao: registo.descricao,
         fotoUrl: registo.fotos[0] || ''
-      }))
+      })),
+      servicos: reservaAnimal?.servicos
     };
 
     res.status(200).json(historial);
@@ -264,10 +274,29 @@ router.post('/reservas', async (req: Request, res: Response) => {
 
     const inicio = dataEntrada ? new Date(dataEntrada) : data ? new Date(data) : null;
     const fim = dataSaida ? new Date(dataSaida) : null;
-    
+
     if (!inicio || isNaN(inicio.getTime())) return res.status(400).json({ error: 'Data de entrada inválida.' });
     if (!fim || isNaN(fim.getTime())) return res.status(400).json({ error: 'Data de saída inválida.' });
     if (fim <= inicio) return res.status(400).json({ error: 'A data de saída deve ser posterior à data de entrada.' });
+
+    // Verificar se o animal já tem uma reserva ativa (Pendente ou CheckIn)
+    const reservaAtiva = await prisma.reserva.findFirst({
+      where: {
+        animalId: idAnimal,
+        estado: {
+          in: ['Pendente', 'CheckIn']
+        }
+      }
+    });
+
+    if (reservaAtiva) {
+      return res.status(409).json({ 
+        error: 'Este animal já possui uma reserva ativa.',
+        estadoReservaAtiva: reservaAtiva.estado,
+        dataEntrada: reservaAtiva.dataEntrada,
+        dataSaida: reservaAtiva.dataSaida
+      });
+    }
 
     const novaReserva = await prisma.reserva.create({
       data: {
@@ -350,7 +379,43 @@ router.delete('/reservas/:idReserva', async (req: Request, res: Response) => {
   }
 }); // <-- CORREÇÃO: O fecho da Rota 8 acaba exatamente aqui!
 
-// 9. ROTA PARA A RECEÇÃO: EFETUAR CHECK-IN E VALIDAR VACINAS
+// 9. ROTA PARA ATUALIZAR PLANO VACINAL (RECEÇÃO)
+router.patch('/plano-vacinal/:idAnimal', async (req: Request, res: Response) => {
+  const { idAnimal } = req.params;
+  const { dataUltimaVacina, isValido, estado } = req.body;
+
+  try {
+    const animalExiste = await prisma.animal.findUnique({
+      where: { idAnimal: idAnimal },
+      include: { planoVacinal: true }
+    });
+
+    if (!animalExiste) {
+      return res.status(404).json({ error: 'Animal não encontrado.' });
+    }
+
+    if (!animalExiste.planoVacinal) {
+      console.error(animalExiste.planoVacinal)
+      return res.status(404).json({ error: 'Plano vacinal não encontrado para este animal.' });
+    }
+
+    const planoAtualizado = await prisma.planoVacinal.update({
+      where: { idPlano: animalExiste.planoVacinal.idPlano },
+      data: {
+        dataUltimaVacina: dataUltimaVacina ? new Date(dataUltimaVacina) : undefined,
+        isValido: isValido !== undefined ? isValido : undefined,
+        estado: estado || 'Valido'
+      }
+    });
+
+    res.status(200).json({ message: 'Plano vacinal atualizado com sucesso!', planoVacinal: planoAtualizado });
+  } catch (error) {
+    console.error("Erro ao atualizar plano vacinal:", error);
+    res.status(500).json({ error: 'Erro interno ao atualizar plano vacinal.' });
+  }
+});
+
+// 10. ROTA PARA A RECEÇÃO: EFETUAR CHECK-IN E VALIDAR VACINAS
 router.patch('/reservas/:idReserva/checkin', async (req: Request, res: Response) => {
   const { idReserva } = req.params;
 
@@ -382,7 +447,7 @@ router.patch('/reservas/:idReserva/checkin', async (req: Request, res: Response)
   }
 });
 
-// 10. ROTA PARA EFETUAR CHECK-OUT (PAGAR)
+// 11. ROTA PARA EFETUAR CHECK-OUT (PAGAR)
 router.patch('/reservas/:idReserva/checkout', async (req: Request, res: Response) => {
   const { idReserva } = req.params;
 
@@ -422,7 +487,44 @@ router.patch('/reservas/:idReserva/cancelar', async (req: Request, res: Response
   }
 });
 
-// 12. ROTA PARA TAREFAS DO DIA (STAFF)
+// 12. ROTA PARA BUSCAR SERVIÇOS FINALIZADOS DE UM ANIMAL NUM DIA
+router.get('/animais/:idAnimal/servicos-finalizados', async (req: Request, res: Response) => {
+  const { idAnimal } = req.params;
+  const data = req.query.data ? new Date(req.query.data as string) : new Date();
+
+  try {
+    const inicioDoD = new Date(data);
+    inicioDoD.setHours(0, 0, 0, 0);
+    const fimDoD = new Date(data);
+    fimDoD.setHours(23, 59, 59, 999);
+
+    // Buscar todas as reservas do animal
+    const reservas = await prisma.reserva.findMany({
+      where: { animalId: idAnimal },
+      include: {
+        servicos: {
+          where: {
+            estado: 'Finalizado',
+            data: {
+              gte: inicioDoD,
+              lte: fimDoD
+            }
+          }
+        }
+      }
+    });
+
+    // Consolidar todos os serviços finalizados
+    const servicosFinalizados = reservas.flatMap(r => r.servicos);
+
+    res.status(200).json(servicosFinalizados);
+  } catch (error) {
+    console.error("Erro ao buscar serviços finalizados:", error);
+    res.status(500).json({ error: 'Erro interno ao buscar serviços finalizados.' });
+  }
+});
+
+// 13. ROTA PARA TAREFAS DO DIA (STAFF)
 router.get('/tarefas', async (req: Request, res: Response) => {
   try {
     const data = req.query.data ? new Date(req.query.data as string) : new Date();
@@ -455,7 +557,7 @@ router.get('/tarefas', async (req: Request, res: Response) => {
   }
 });
 
-// 13. ROTA PARA CONTAR FUNCIONÁRIOS STAFF
+// 14. ROTA PARA CONTAR FUNCIONÁRIOS STAFF
 router.get('/funcionarios/count', async (req: Request, res: Response) => {
   try {
     const count = await prisma.funcionario.count({
@@ -471,7 +573,7 @@ router.get('/funcionarios/count', async (req: Request, res: Response) => {
   }
 });
 
-// 14. ROTA PARA MARCAR TAREFA COMO CONCLUÍDA
+// 15. ROTA PARA MARCAR TAREFA COMO CONCLUÍDA
 router.patch('/tarefas/:idTarefa/concluir', async (req: Request, res: Response) => {
   const { idTarefa } = req.params;
 
@@ -485,6 +587,11 @@ router.patch('/tarefas/:idTarefa/concluir', async (req: Request, res: Response) 
     if (!tarefa) {
       return res.status(404).json({ error: 'Tarefa não encontrada.' });
     }
+
+    await prisma.servico.update({
+      where: { idServico: idTarefa },
+      data: { estado: 'Finalizado' } 
+    });
 
     res.status(200).json({ message: 'Tarefa concluída com sucesso!', tarefa });
   } catch (error) {

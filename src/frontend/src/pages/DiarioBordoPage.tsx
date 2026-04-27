@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useParams } from 'react-router-dom'; // <-- IMPORTAÇÃO NOVA
+import { useParams } from 'react-router-dom';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import './DiarioBordoPage.css';
@@ -10,35 +10,68 @@ interface Registo {
   descricao: string;
 }
 
+interface Servico {
+  idServico: string;
+  tipo: 'Grooming' | 'Passeio' | 'Adestramento';
+  data: string;
+  preco: number;
+  estado: 'Pendente' | 'Finalizado';
+}
+
 const DiarioBordoPage: React.FC = () => {
-  const { idAnimal } = useParams(); // <-- LÊ O ID DO CÃO A PARTIR DO URL
+  const { idAnimal } = useParams();
   const [diario, setDiario] = useState<Registo[]>([]);
+  const [servicos, setServicos] = useState<Servico[]>([]);
   const [animalNome, setAnimalNome] = useState('A carregar...');
   const [estadoClinico, setEstadoClinico] = useState('...');
+  const [loading, setLoading] = useState(true);
 
   const user = {
     nome: localStorage.getItem('user_nome') || "Utilizador",
     nif: localStorage.getItem('user_nif') || "---",
     telemovel: localStorage.getItem('user_telemovel') || "---",
-    perfil: localStorage.getItem('role') || "Tutor" // <-- ADICIONA ISTO
+    perfil: localStorage.getItem('role') || "Tutor"
+  };
+
+  const getTipoLabel = (tipo: string) => {
+    switch (tipo) {
+      case 'Passeio':
+        return '🚶 Passear';
+      case 'Grooming':
+        return '✂️ Grooming';
+      case 'Adestramento':
+        return '🎯 Adestramento';
+      default:
+        return tipo;
+    }
   };
 
   useEffect(() => {
     const fetchDados = async () => {
       try {
+        setLoading(true);
         const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-        // Vai buscar o historial do cão específico!
+        
+        // Buscar historial (diário de bordo)
         const res = await axios.get(`${API_URL}/api/animais/${idAnimal}/historial`);
         setDiario(res.data.diarioBordo);
         setAnimalNome(res.data.nome);
         setEstadoClinico(res.data.estadoClinico);
-      } catch (e) { 
-        console.error("Erro ao carregar o diário:", e); 
+
+        // Buscar serviços finalizados do dia
+        const resServicos = await axios.get(
+          `${API_URL}/api/animais/${idAnimal}/servicos-finalizados`
+        );
+        setServicos(resServicos.data);
+      } catch (e) {
+        console.error("Erro ao carregar o diário:", e);
+      } finally {
+        setLoading(false);
       }
     };
     
     if (idAnimal) {
-        fetchDados();
+      fetchDados();
     }
   }, [idAnimal]);
 
@@ -53,34 +86,39 @@ const DiarioBordoPage: React.FC = () => {
           <h2>Detalhes do Animal:</h2>
           <p>Nome: {animalNome}</p>
           <p>Estado: {estadoClinico}</p>
-          <p>To-do: Banho | Passeio</p>
+          <p>Serviços finalizados hoje: {servicos.length}</p>
         </div>
         <div className="info-text-block">
           <p>Alimentação: Responsivo</p>
           <p>Comportamento: Positivo</p>
         </div>
         <div className="animal-photo-circle">
-          <img src="https://images.unsplash.com/photo-1516734212448-1dd58be2cb56?w=200&q=80" alt="Cão" />
+          <img src="https://images.unsplash.com/photo-1516734212448-1dd58be2cb56?w=200&q=80" alt="Foto do Cão" />
         </div>
       </section>
 
+      {/* SEÇÃO DE SERVIÇOS FINALIZADOS */}
       <section className="tasks-container">
-        {diario.length > 0 ? diario.map((item, idx) => (
-          <div className="task-row" key={idx}>
-            <div className="task-text">
-              <h4>Registo: {new Date(item.dataHora).toLocaleString('pt-PT')}</h4>
-              <p>Nota: {item.descricao}</p>
+        <h3 style={{ fontSize: '20px', fontWeight: 600, marginBottom: '15px', color: '#1a1a1a' }}>📔 Registos no Diário:</h3>
+        {servicos.length > 0 ? (
+          servicos.map((servico) => (
+            <div className="task-row" key={servico.idServico}>
+              <div className="task-text">
+                <h4>{getTipoLabel(servico.tipo)}</h4>
+                <p>Hora: {new Date(servico.data).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}</p>
+                <p>Preço: €{servico.preco.toFixed(2)}</p>
+              </div>
+              <div className="task-indicator" style={{ backgroundColor: '#10b981' }}></div>
             </div>
-            <div className="task-indicator" style={{ backgroundColor: idx % 2 === 0 ? '#39FF14' : '#FFE600' }}></div>
-          </div>
-        )) : (
-            <p style={{ textAlign: 'center', color: '#1A1A1A', marginTop: '20px' }}>Ainda não há registos no diário de hoje.</p>
+          ))
+        ) : (
+          <p style={{ textAlign: 'center', color: '#999', marginTop: '10px', fontStyle: 'italic' }}>Nenhum serviço finalizado hoje</p>
         )}
       </section>
-
         <a href="/tutor" className="btn-voltar">
           Voltar
         </a>
+
       <hr className="separator" style={{ width: '90%', margin: '20px auto', borderTop: '1px solid #CCCCCC' }} />
       <Footer />
     </div>

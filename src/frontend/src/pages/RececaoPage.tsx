@@ -3,6 +3,7 @@ import axios from 'axios';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import './RececaoPage.css';
+import { data } from 'react-router-dom';
 
 interface Reserva {
   idReserva: string;
@@ -10,6 +11,7 @@ interface Reserva {
   dataSaida: string;
   estado: string;
   animal: {
+    idAnimal: string;
     nome: string;
     raca: string;
     tutorNif: string;
@@ -25,6 +27,10 @@ const RececaoPage: React.FC = () => {
   const [showBilling, setShowBilling] = useState(false);
   const [reservaParaPagar, setReservaParaPagar] = useState<string | null>(null);
   const [reservas, setReservas] = useState<Reserva[]>([]);
+  const [showPlanoModal, setShowPlanoModal] = useState(false);
+  const [reservaPlanoSelecionada, setReservaPlanoSelecionada] = useState<Reserva | null>(null);
+  const [dataVacina, setDataVacina] = useState('');
+  const [vacinaValida, setVacinaValida] = useState(true);
   
   const funcionario = { 
     nome: localStorage.getItem('user_nome') || "Funcionário", 
@@ -47,9 +53,13 @@ const RececaoPage: React.FC = () => {
   const handleCheckInAction = async (id: string, accept: boolean) => {
     try {
       if (accept) {
-        // Botão "S"
-        await axios.patch(`${API_URL}/api/reservas/${id}/checkin`);
-        alert("Check-In realizado com sucesso!");
+        // Botão "S" - Abrir modal para preencher plano vacinal
+        const reserva = reservas.find(r => r.idReserva === id);
+        setReservaPlanoSelecionada(reserva || null);
+        setShowPlanoModal(true);
+        setDataVacina('');
+        setVacinaValida(true);
+        return;
       } else {
         // Botão "N" - Agora avisa a BD!
         await axios.patch(`${API_URL}/api/reservas/${id}/cancelar`);
@@ -59,6 +69,34 @@ const RececaoPage: React.FC = () => {
     } catch (err: any) {
       console.error(err);
       alert(err.response?.data?.error || "Ocorreu um erro no servidor ao processar a ação.");
+    }
+  };
+
+  const handleConfirmarPlanoVacinal = async () => {
+    if (!reservaPlanoSelecionada || !dataVacina) {
+      console.log(dataVacina)
+      alert("Por favor, preencha a data da última vacina.");
+      return;
+    }
+
+    try {
+      // Atualizar plano vacinal
+      await axios.patch(`${API_URL}/api/plano-vacinal/${reservaPlanoSelecionada.animal.idAnimal}`, {
+        dataUltimaVacina: new Date(dataVacina),
+        isValido: vacinaValida,
+        estado: vacinaValida ? 'Valido' : 'Caducado'
+      });
+
+      // Fazer check-in
+      await axios.patch(`${API_URL}/api/reservas/${reservaPlanoSelecionada.idReserva}/checkin`);
+      
+      alert("Plano Vacinal preenchido e Check-In realizado com sucesso!");
+      setShowPlanoModal(false);
+      setReservaPlanoSelecionada(null);
+      fetchData(); 
+    } catch (err: any) {
+      console.error(err);
+      alert(err.response?.data?.error || "Erro ao atualizar plano vacinal.");
     }
   };
 
@@ -112,6 +150,78 @@ const RececaoPage: React.FC = () => {
     <div className="rececao-page">
       <Header userData={funcionario} />
       
+      {/* MODAL PARA PREENCHER PLANO VACINAL */}
+      {showPlanoModal && reservaPlanoSelecionada && (
+        <div className="modal-overlay">
+          <div className="modal-plano-vacinal">
+            <h3>Preencher Plano Vacinal - {reservaPlanoSelecionada.animal.nome}</h3>
+            
+            <div className="modal-content">
+              <div className="modal-section">
+                <p><strong>Tutor:</strong> {reservaPlanoSelecionada.animal.tutor?.utilizador?.nome || 'N/A'}</p>
+                <p><strong>NIF:</strong> {reservaPlanoSelecionada.animal.tutorNif}</p>
+              </div>
+
+              <div className="modal-form-group">
+                <label htmlFor="data-vacina">Data da Última Vacina:</label>
+                <input
+                  id="data-vacina"
+                  type="date"
+                  value={dataVacina}
+                  onChange={(e) => {
+                    console.log("Data selecionada:", e.target.value);
+                    setDataVacina(e.target.value);
+                  }}
+                  className="modal-input"
+                />
+              </div>
+
+              <div className="modal-form-group">
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={vacinaValida}
+                    onChange={(e) => setVacinaValida(e.target.checked)}
+                  />
+                  Vacina válida e em conformidade
+                </label>
+              </div>
+
+              {reservaPlanoSelecionada.animal.planoVacinal?.documento && (
+                <div className="modal-section">
+                  <a 
+                    href={`${API_URL}${reservaPlanoSelecionada.animal.planoVacinal.documento}`} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="modal-link"
+                  >
+                    📄 Ver PDF da Ficha Técnica
+                  </a>
+                </div>
+              )}
+            </div>
+
+            <div className="modal-actions">
+              <button 
+                className="btn-cancelar-modal" 
+                onClick={() => {
+                  setShowPlanoModal(false);
+                  setReservaPlanoSelecionada(null);
+                }}
+              >
+                Cancelar
+              </button>
+              <button 
+                className="btn-confirmar-modal" 
+                onClick={handleConfirmarPlanoVacinal}
+              >
+                ✓ Confirmar e Check-In
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
       <nav className="tabs-bar">
         <button className={`tab-btn ${activeTab === 'IN' ? 'active' : ''}`} onClick={() => setActiveTab('IN')}>Check-IN</button>
         <div className="tab-separator"></div>
@@ -146,7 +256,7 @@ const RececaoPage: React.FC = () => {
                       <td>{r.animal.nome}</td>
                       <td>
                         {r.animal.planoVacinal?.documento ? (
-                           <a href={`${API_URL}${r.animal.planoVacinal.documento}`} target="_blank" style={{color: '#17a2b8'}}>ver_pdf</a>
+                           <a href={`${API_URL}${r.animal.planoVacinal.documento}`} target="_blank" style={{color: '#17a2b8'}}>Com Ficha</a>
                         ) : "Sem Ficha"}
                       </td>
                       <td>{r.animal.planoVacinal?.isValido ? "Sim" : "Não"}</td>
@@ -176,18 +286,7 @@ const RececaoPage: React.FC = () => {
                 </tr>
               ))}
             </tbody>
-          </table>
-          
-          <div style={{ textAlign: 'right', marginTop: '20px' }}>
-            {activeTab === 'IN' ? (
-              <>
-                <span style={{ marginRight: '15px' }}>Check-IN presenciais:</span>
-                <button className="btn-filter" style={{ borderRadius: '20px', padding: '10px 30px' }}>Começar</button>
-              </>
-            ) : (
-              <button className="btn-filter" style={{ backgroundColor: '#FFF', border: '1px solid #BBBBBB' }}>Em caso de Emergência</button>
-            )}
-          </div>
+          </table>  
         </div>
       </main>
       <Footer />
