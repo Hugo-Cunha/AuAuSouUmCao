@@ -15,7 +15,7 @@ const HomePage: React.FC = () => {
       <section className="hero-section">
         <h2 className="hero-slogan">Somos de todos os cães para todos os cães</h2>
         <div className="hero-gallery">
-          <img src="https://images.unsplash.com/photo-1537151608804-ea6f23c3d56a?w=400&q=80" alt="São Bernardo" />
+          <img src="https://evidensia.pt/getmedia/a45da972-934e-41f3-99c1-d49fdcebae59/Sao-Bernardo-perfil.webp" alt="São Bernardo" />
           <img src="https://images.unsplash.com/photo-1583337130417-3346a1be7dee?w=400&q=80" alt="Cão com chapéu" />
           <img src="https://images.unsplash.com/photo-1517423568366-8b83523034fd?w=400&q=80" alt="Shih Tzu" />
           <img src="https://images.unsplash.com/photo-1546975490-e8b92a360b24?w=400&q=80" alt="Cães abraçados" />
@@ -26,10 +26,10 @@ const HomePage: React.FC = () => {
       <section className="services-section">
         <h2 className="section-title">Tudo o que oferecemos</h2>
         <div className="services-grid">
-          <div className="service-item"><img src="https://images.unsplash.com/photo-1628009368231-7bb7cbcb8127?w=400&q=80" alt="Veterinário" /><p>Veterinário</p></div>
-          <div className="service-item"><img src="https://images.unsplash.com/photo-1516734212448-1dd58be2cb56?w=400&q=80" alt="Banhos" /><p>Banhos</p></div>
+          <div className="service-item"><img src="https://media.rtp.pt/anossatarde/wp-content/uploads/sites/158/2024/06/08-cao-e-gato-com-veterinario-860x507.jpg" alt="Veterinário" /><p>Veterinário</p></div>
+          <div className="service-item"><img src="https://www.zooplus.pt/magazine/wp-content/uploads/2020/09/shampoo-para-caes.webp" alt="Banhos" /><p>Banhos</p></div>
           <div className="service-item"><img src="https://images.unsplash.com/photo-1596492784531-6e6eb5ea9993?w=400&q=80" alt="Tosquia" /><p>Tosquia</p></div>
-          <div className="service-item"><img src="https://images.unsplash.com/photo-1522276498395-f4f68f718455?w=400&q=80" alt="Passeios" /><p>Passeios</p></div>
+          <div className="service-item"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTTSzIR1QFsn9_aYoX-TXLR21Cwjr7mlKavyA&s" alt="Passeios" /><p>Passeios</p></div>
         </div>
       </section>
 

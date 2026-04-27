@@ -259,9 +259,6 @@ const MarcacoesPage: React.FC = () => {
 
       <main className="marcacoes-main">
         <div>
-        <a href="/tutor" className="btn-voltar">
-          Voltar
-        </a>
         <h1 className="page-title">Minhas Marcações</h1>
     </div>
         <div className="marcacoes-content">
@@ -534,6 +531,9 @@ const MarcacoesPage: React.FC = () => {
             )}
           </section>
         </div>
+        <a href="/tutor" className="btn-voltar">
+          Voltar
+        </a>
       </main>
 
       <Footer />

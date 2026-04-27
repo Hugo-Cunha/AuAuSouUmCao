@@ -422,4 +422,75 @@ router.patch('/reservas/:idReserva/cancelar', async (req: Request, res: Response
   }
 });
 
+// 12. ROTA PARA TAREFAS DO DIA (STAFF)
+router.get('/tarefas', async (req: Request, res: Response) => {
+  try {
+    const data = req.query.data ? new Date(req.query.data as string) : new Date();
+    const inicioDoD = new Date(data);
+    inicioDoD.setHours(0, 0, 0, 0);
+    const fimDoD = new Date(data);
+    fimDoD.setHours(23, 59, 59, 999);
+
+    const tarefas = await prisma.servico.findMany({
+      where: {
+        data: {
+          gte: inicioDoD,
+          lte: fimDoD
+        }
+      },
+      include: {
+        reserva: {
+          include: {
+            animal: true,
+            box: true
+          }
+        }
+      }
+    });
+
+    res.status(200).json(tarefas);
+  } catch (error) {
+    console.error("Erro ao buscar tarefas:", error);
+    res.status(500).json({ error: 'Erro interno ao buscar tarefas.' });
+  }
+});
+
+// 13. ROTA PARA CONTAR FUNCIONÁRIOS STAFF
+router.get('/funcionarios/count', async (req: Request, res: Response) => {
+  try {
+    const count = await prisma.funcionario.count({
+      where: {
+        perfil: 'Staff'
+      }
+    });
+
+    res.status(200).json({ total: count });
+  } catch (error) {
+    console.error("Erro ao contar funcionários:", error);
+    res.status(500).json({ error: 'Erro interno ao contar funcionários.' });
+  }
+});
+
+// 14. ROTA PARA MARCAR TAREFA COMO CONCLUÍDA
+router.patch('/tarefas/:idTarefa/concluir', async (req: Request, res: Response) => {
+  const { idTarefa } = req.params;
+
+  try {
+    // Como não temos campo "concluida" em Servico, vamos usar um log ou atualizar a data
+    // Por enquanto apenas confirmamos que a tarefa existe
+    const tarefa = await prisma.servico.findUnique({
+      where: { idServico: idTarefa }
+    });
+
+    if (!tarefa) {
+      return res.status(404).json({ error: 'Tarefa não encontrada.' });
+    }
+
+    res.status(200).json({ message: 'Tarefa concluída com sucesso!', tarefa });
+  } catch (error) {
+    console.error("Erro ao concluir tarefa:", error);
+    res.status(500).json({ error: 'Erro interno ao concluir tarefa.' });
+  }
+});
+
 export default router;

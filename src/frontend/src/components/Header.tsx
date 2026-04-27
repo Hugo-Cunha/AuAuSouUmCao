@@ -28,14 +28,13 @@ const Header: React.FC<HeaderProps> = ({ title, userData }) => {
   };
 
   return (
-    <header className="site-header" style={{ height: '130px', padding: '0 40px' }}>
+    <header className="site-header" style={{ height: '130px', padding: '0 0px' }}>
       <Link to="/" className="logo-container">
-        <div className="logo-circle" style={{ width: '90px', height: '90px' }}>
-          <img 
-            src="https://cdn.discordapp.com/attachments/1212044201747816518/1496523823208599603/Gemini_Generated_Image_sebx2ssebx2ssebx.png?ex=69ea31eb&is=69e8e06b&hm=e86093c99b49fbbe0b718a5942cb18caa1e6e79fdf19253b2e252c75d225bb2e" 
-            alt="Logo" 
-          />
-        </div>
+        <img 
+          src="https://cdn.discordapp.com/attachments/1212044201747816518/1496523823208599603/Gemini_Generated_Image_sebx2ssebx2ssebx.png?ex=69ea31eb&is=69e8e06b&hm=e86093c99b49fbbe0b718a5942cb18caa1e6e79fdf19253b2e252c75d225bb2e" 
+          alt="Logo"
+          style={{ width: '250px', height: '130px' }}
+        />
       </Link>
       
       <div className="header-center">
@@ -61,7 +60,7 @@ const Header: React.FC<HeaderProps> = ({ title, userData }) => {
       </div>
       
       {/* ZONA CONDICIONAL: LOGIN vs LOGOUT */}
-      <div className="header-auth-zone" style={{ width: '100px' }}>
+      <div className="header-auth-zone" style={{ width: '100px'}}>
         {userData ? (
           /* SE ESTIVER LOGADO -> MOSTRA LOGOUT */
           <div onClick={handleLogout} style={{ cursor: 'pointer', textAlign: 'center' }}>
