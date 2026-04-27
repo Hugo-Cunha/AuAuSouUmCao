@@ -15,6 +15,12 @@ enum TipoPerfil {
   Rececao
 }
 
+enum EstadoServico {
+  Feito
+  Pendente
+  Finalizado
+}
+
 enum EstadoVacina {
   Valido
   Caducado
@@ -147,6 +153,7 @@ model Servico {
   data      DateTime
   preco     Float
   tipo      TipoServico
+  estado    EstadoServico @default(Pendente)
 
   // Numa base de dados relacional, para uma Reserva ter vários serviços, 
   // o Serviço TEM de ter a chave estrangeira da Reserva.

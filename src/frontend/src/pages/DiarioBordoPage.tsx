@@ -78,6 +78,9 @@ const DiarioBordoPage: React.FC = () => {
         )}
       </section>
 
+        <a href="/tutor" className="btn-voltar">
+          Voltar
+        </a>
       <hr className="separator" style={{ width: '90%', margin: '20px auto', borderTop: '1px solid #CCCCCC' }} />
       <Footer />
     </div>

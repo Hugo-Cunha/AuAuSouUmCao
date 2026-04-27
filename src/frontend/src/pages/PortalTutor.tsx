@@ -115,6 +115,7 @@ const PortalTutor: React.FC = () => {
             </main>
 
             <hr className="separator" />
+            
             <Footer />
         </div>
     );

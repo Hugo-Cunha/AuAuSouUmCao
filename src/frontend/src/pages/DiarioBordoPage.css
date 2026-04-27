@@ -132,13 +132,21 @@
 .btn-pill:hover { opacity: 0.8; }
 
 .btn-voltar {
-  display: inline-block;
-  margin-bottom: 20px;
-  padding: 10px 15px;
-  background-color: #e0e0e0;
-  color: #333;
-  border-radius: 6px;
+  display: flex;
+  text-align: center;
+  margin: 20px 0 20px 0;
+  padding: 10px 24px;
+  background-color: #7c3aed;
+  color: #ffffff;
   text-decoration: none;
+  border-radius: 20px;
+  font-weight: 600;
   font-size: 14px;
   transition: background-color 0.3s ease;
+  border: none;
+  cursor: pointer;
 }
+
+.btn-voltar:hover {
+  background-color: #d92828;
+} 
