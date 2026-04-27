@@ -29,7 +29,8 @@ const PortalTutor: React.FC = () => {
     const utilizador = {
         nome: localStorage.getItem('user_nome') || "Utilizador",
         nif: localStorage.getItem('user_nif') || "---",
-        telemovel: localStorage.getItem('user_telemovel') || "---"
+        telemovel: localStorage.getItem('user_telemovel') || "---",
+        perfil: localStorage.getItem('role') || "Tutor" // <-- ADICIONA ISTO
     };
 
     useEffect(() => {

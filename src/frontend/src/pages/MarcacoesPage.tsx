@@ -55,6 +55,7 @@ const MarcacoesPage: React.FC = () => {
     nome: localStorage.getItem('user_nome') || 'Utilizador',
     nif: localStorage.getItem('user_nif') || '---',
     telemovel: localStorage.getItem('user_telemovel') || '---',
+    perfil: localStorage.getItem('role') || 'Tutor', // <-- ADICIONA ISTO
   };
 
   // Carregar animais e reservas ao montar

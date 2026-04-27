@@ -78,7 +78,7 @@ const RececaoPage: React.FC = () => {
   if (showBilling) {
     return (
       <div className="rececao-page">
-        <Header isRececao userData={funcionario} />
+        <Header userData={funcionario} />
         <div className="billing-bar">Check-OUT Pagar</div>
         <div className="rececao-card" style={{ margin: '0 25px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -110,7 +110,7 @@ const RececaoPage: React.FC = () => {
 
   return (
     <div className="rececao-page">
-      <Header isRececao userData={funcionario} />
+      <Header userData={funcionario} />
       
       <nav className="tabs-bar">
         <button className={`tab-btn ${activeTab === 'IN' ? 'active' : ''}`} onClick={() => setActiveTab('IN')}>Check-IN</button>
