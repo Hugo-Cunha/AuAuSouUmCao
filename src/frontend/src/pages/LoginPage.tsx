@@ -33,14 +33,15 @@ const LoginPage: React.FC = () => {
       // O REDIRECIONAMENTO AUTOMÁTICO MÁGICO!
       if (role === 'Admin') {
         navigate('/gestao');
-      } else if (role === 'Staff' || role === 'Vet') {
+      } else if (role === 'Staff') {
         navigate('/staff');
+      } else if (role === 'Vet') {
+        navigate('/vet')
       } else if (role === 'Rececao') { // <-- ADICIONA ISTO
         navigate('/rececao');
       } else {
         navigate('/tutor'); 
       }
-
     } catch (erro: any) {
       alert(erro.response?.data?.error || 'Erro ao tentar iniciar sessão.');
     }

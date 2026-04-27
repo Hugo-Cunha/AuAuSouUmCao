@@ -341,7 +341,9 @@ const MarcacoesPage: React.FC = () => {
                     <div
                       key={animal.idAnimal}
                       className={`cao-card ${animalSelecionado?.idAnimal === animal.idAnimal ? 'ativo' : ''}`}
-                      onClick={() => setAnimalSelecionado(animal)}
+                      onClick={() => setAnimalSelecionado(
+                        animalSelecionado?.idAnimal === animal.idAnimal ? null : animal
+                      )}
                     >
                       <div className="cao-card-header">
                         <h4>{animal.nome}</h4>

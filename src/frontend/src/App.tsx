@@ -6,6 +6,7 @@ import PortalTutor from './pages/PortalTutor';
 import DiarioBordoPage from './pages/DiarioBordoPage'; 
 import MarcacoesPage from './pages/MarcacoesPage';
 import RececaoPage from './pages/RececaoPage';
+import StaffPage from './pages/StaffPage';
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
         {/* NOVA ROTA DINÂMICA: Agora aceita o ID do animal! */}
         <Route path="/tutor/diario/:idAnimal" element={<DiarioBordoPage />} />
         <Route path="/rececao" element={<RececaoPage />} />
+        <Route path="/staff" element={<StaffPage/>}/>
         
       </Routes>
     </BrowserRouter>
