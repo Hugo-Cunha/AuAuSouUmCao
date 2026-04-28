@@ -60,4 +60,36 @@ export class GestHospedesFacade {
   async listarAnimaisTutor(nif: string) {
     return await this.animalDAO.findByTutorNif(nif);
   }
+
+  // ==========================================
+  // ATUALIZAÇÃO DE PLANO VACINAL (Receção)
+  // ==========================================
+  async atualizarPlanoVacinal(idAnimal: string, dadosVacina: any) {
+    // Validação: O animal deve existir
+    const animal = await this.animalDAO.findByIdWithHistorial(idAnimal);
+    if (!animal) {
+      throw new Error("Animal não encontrado.");
+    }
+
+    // Regra de Negócio: A data deve ser válida
+    if (dadosVacina.dataUltimaVacina) {
+      const data = new Date(dadosVacina.dataUltimaVacina);
+      if (isNaN(data.getTime())) {
+        throw new Error("Data da vacina inválida.");
+      }
+    }
+
+    return await this.animalDAO.updatePlanoVacinal(idAnimal, dadosVacina);
+  }
+
+  // ==========================================
+  // HISTORIAL E DIÁRIO
+  // ==========================================
+  async obterHistorialAnimal(idAnimal: string) {
+    return await this.animalDAO.findHistorialComDados(idAnimal);
+  }
+
+  async animalDiario(idAnimal: string) {
+    return await this.animalDAO.animalDiario(idAnimal);
+  }
 }

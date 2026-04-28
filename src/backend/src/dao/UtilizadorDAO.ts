@@ -31,4 +31,34 @@ export class UtilizadorDAO {
       }
     });
   }
+
+  async countTotal() {
+    return await prisma.funcionario.count();
+  }
+
+  // Conta funcionários por perfil
+  async countByPerfil(perfil: string) {
+    return await prisma.funcionario.count({
+      where: { perfil: 'Staff' }
+    });
+  }
+
+  // Lista todos os funcionários com seus dados
+  async findAll() {
+    return await prisma.funcionario.findMany({
+      include: {
+        utilizador: true
+      }
+    });
+  }
+
+  // Busca funcionário pelo ID
+  async findById(idFuncionario: string) {
+    return await prisma.funcionario.findUnique({
+      where: { idFuncionario },
+      include: {
+        utilizador: true
+      }
+    });
+  }
 }

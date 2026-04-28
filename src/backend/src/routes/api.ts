@@ -153,4 +153,85 @@ router.patch('/reservas/:id/cancelar', async (req, res) => {
   } catch (error: any) { res.status(400).json({ error: error.message }); }
 });
 
+// ==========================================
+// PLANO VACINAL
+// ==========================================
+router.patch('/plano-vacinal/:idAnimal', async (req, res) => {
+  try {
+    const { dataUltimaVacina, isValido, estado } = req.body;
+    const planoAtualizado = await gestor.atualizarPlanoVacinal(req.params.idAnimal, {
+      dataUltimaVacina: dataUltimaVacina ? new Date(dataUltimaVacina) : undefined,
+      isValido: isValido ?? false,
+      estado: estado || 'Valido'
+    });
+    res.json(planoAtualizado);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }     
+});
+
+// ==========================================
+// TAREFAS (STAFF)
+// ==========================================
+router.get('/tarefas', async (req, res) => {
+  try {
+    const tarefas = await gestor.listarTarefasDoDia();
+    res.json(tarefas);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+router.patch('/tarefas/:id/concluir', async (req, res) => {
+  try {
+    const tarefa = await gestor.marcarTarefaConcluida(req.params.id);
+    res.json(tarefa);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// ==========================================
+// FUNCIONÁRIOS
+// ==========================================
+router.get('/funcionarios/count', async (req, res) => {
+  try {
+    const total = await gestor.contarFuncionarios();
+    res.json({ total });
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+router.get('/funcionarios', async (req, res) => {
+  try {
+    const funcionarios = await gestor.listarFuncionarios();
+    res.json(funcionarios);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// ==========================================
+// DIARIO DE BORDO
+// ==========================================
+
+router.get('/animais/:idAnimal/historial', async (req,res) =>{
+  try {
+    const historial = await gestor.animalDiario(req.params.idAnimal); // A implementar: Obter os serviços do dia para o animal
+    res.json(historial);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+router.get('/animais/:idAnimal/servicos-finalizados', async (req,res) =>{
+  try {
+    const servicos = await gestor.listarServicosFinalizados(req.params.idAnimal); // A implementar: Obter os serviços do dia para o animal
+    res.json(servicos);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
 export default router;

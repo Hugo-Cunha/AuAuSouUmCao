@@ -23,7 +23,6 @@ interface Reserva {
   estado: string;
   animalId: string;
   animal: Animal;
-  boxNumero: number;
 }
 
 const MarcacoesPage: React.FC = () => {
@@ -181,7 +180,6 @@ const MarcacoesPage: React.FC = () => {
         dataEntrada,
         dataSaida,
         idAnimal: animalSelecionado.idAnimal,
-        boxNumero: 1,
         banhos: banhos,
         tosquias: tosquias,
         passeios: passeios

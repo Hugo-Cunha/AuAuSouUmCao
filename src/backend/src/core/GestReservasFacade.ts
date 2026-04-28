@@ -16,7 +16,7 @@ export class GestReservasFacade {
   // ==========================================
 
   async criarReserva(dadosReserva: any, servicos: any[]) {
-    const { dataEntrada, dataSaida, animalId, boxNumero } = dadosReserva;
+    const { dataEntrada, dataSaida, animalId } = dadosReserva;
     const entrada = new Date(dataEntrada);
     const saida = new Date(dataSaida);
 
@@ -37,29 +37,22 @@ export class GestReservasFacade {
       throw new Error(`Este animal já possui uma reserva ativa (${reservaAtiva.estado}).`);
     }
 
-    // Regra 4: CONTROLO DE OVERBOOKING (US01 / US02)
-    const boxDesejada = boxNumero || 1;
-    const reservasConflituosas = await this.reservaDAO.findReservasNoPeriodo(entrada, saida);
-    
-    const boxEstaOcupada = reservasConflituosas.some(r => r.boxNumero === boxDesejada);
-    
-    if (boxEstaOcupada) {
-      // Se a box desejada estiver ocupada, procuramos as boxes livres
-      const todasBoxes = await this.reservaDAO.findAllBoxes();
-      const boxesOcupadasIds = reservasConflituosas.map(r => r.boxNumero);
-      const boxesLivres = todasBoxes.filter(b => !boxesOcupadasIds.includes(b.numero));
+    // Regra 4: ATRIBUIÇÃO AUTOMÁTICA DE BOX (com regra de reativos/não-reativos)
+    const reatividade = animalExiste.reatividade || 'Não Reativo';
+    const boxAtribuida = await this.reservaDAO.atribuirBoxAutomaticamente(reatividade, entrada, saida);
 
-      if (boxesLivres.length === 0) {
-        throw new Error("OVERBOOKING: O hotel está completamente lotado para estas datas.");
-      } else {
-        throw new Error(`A Box ${boxDesejada} está ocupada. Boxes livres: ${boxesLivres.map(b => b.numero).join(', ')}`);
-      }
-    }
+    // Cálculo do valor total da reserva
+    const dias = (saida.getTime() - entrada.getTime()) / (1000 * 60 * 60 * 24);
+    const precoEstadia = dias * 20; // 20€ por dia
+    const precoServicos = servicos.reduce((acc, s) => acc + (s.preco || 0), 0);
+    const valorTotal = precoEstadia + precoServicos;
 
     // Se passou em todas as regras de segurança, mandamos o DAO gravar
     dadosReserva.estado = 'Pendente';
     dadosReserva.dataEntrada = entrada;
     dadosReserva.dataSaida = saida;
+    dadosReserva.boxNumero = boxAtribuida; // ← BOX ATRIBUÍDA AUTOMATICAMENTE
+    dadosReserva.valor = valorTotal; // ← VALOR CALCULADO
     
     return await this.reservaDAO.create(dadosReserva, servicos);
   }
@@ -82,5 +75,24 @@ export class GestReservasFacade {
 
   async eliminarReserva(idReserva: string) {
     return await this.reservaDAO.delete(idReserva);
+  }
+
+    // ==========================================
+  // GESTÃO DE TAREFAS (STAFF)
+  // ==========================================
+  async listarTarefasDoDia() {
+    return await this.reservaDAO.findTarefasDoDia();
+  }
+
+  async listarTarefasPendentes() {
+    return await this.reservaDAO.findTarefasPendentes();
+  }
+
+  async marcarTarefaConcluida(idServico: string) {
+    return await this.reservaDAO.marcarConcluida(idServico);
+  }
+
+  async obterServicosFinalizadosHoje(idAnimal: string) {
+    return await this.reservaDAO.findFinalizadosPorAnimalEDia(idAnimal);
   }
 }

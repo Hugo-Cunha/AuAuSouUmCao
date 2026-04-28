@@ -42,6 +42,18 @@ export class GestorHotelFacade {
     return await this.gestHospedes.listarAnimaisTutor(nif); 
   }
 
+  async atualizarPlanoVacinal(idAnimal: string, dadosVacina: any) {
+    return await this.gestHospedes.atualizarPlanoVacinal(idAnimal, dadosVacina);
+  }
+
+  async obterHistorialAnimal(idAnimal: string) {
+    return await this.gestHospedes.obterHistorialAnimal(idAnimal);
+  }
+
+  async obterServicosFinalizadosHoje(idAnimal: string) {
+    return await this.gestReservas.obterServicosFinalizadosHoje(idAnimal);
+  }
+
   // ==========================================
   // DELEGAÇÃO: RESERVAS
   // ==========================================
@@ -83,5 +95,35 @@ export class GestorHotelFacade {
 
   async prescreverMedicacao(dados: any) {
     return await this.gestClinica.prescreverMedicacao(dados);
+  }
+
+  // ==========================================
+  // DELEGAÇÃO: TAREFAS E FUNCIONÁRIOS
+  // ==========================================
+  async listarTarefasDoDia() {
+    return await this.gestReservas.listarTarefasDoDia();
+  }
+
+  async marcarTarefaConcluida(idServico: string) {
+    return await this.gestReservas.marcarTarefaConcluida(idServico);
+  }
+
+  async contarFuncionarios() {
+    return await this.gestOperacoes.contarFuncionarios();
+  }
+
+  async listarFuncionarios() {
+    return await this.gestOperacoes.listarFuncionarios();
+  }
+
+  // ==========================================
+  // DIARIO DE BORDO
+  // ==========================================
+  async animalDiario(animalId: string) {
+    return await this.gestHospedes.animalDiario(animalId);
+  }
+
+  async listarServicosFinalizados(animalId: string) {
+    return await this.gestReservas.obterServicosFinalizadosHoje(animalId);
   }
 }

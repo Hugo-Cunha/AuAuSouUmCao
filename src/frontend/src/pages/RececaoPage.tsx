@@ -3,7 +3,6 @@ import axios from 'axios';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import './RececaoPage.css';
-import { data } from 'react-router-dom';
 
 interface Reserva {
   idReserva: string;
