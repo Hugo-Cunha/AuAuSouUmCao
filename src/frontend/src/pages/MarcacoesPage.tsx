@@ -182,7 +182,8 @@ const MarcacoesPage: React.FC = () => {
         idAnimal: animalSelecionado.idAnimal,
         banhos: banhos,
         tosquias: tosquias,
-        passeios: passeios
+        passeios: passeios,
+        valor: calcularPreco()
       });
 
       setReservas([...reservas, res.data]);

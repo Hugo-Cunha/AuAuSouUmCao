@@ -75,6 +75,17 @@ const DiarioBordoPage: React.FC = () => {
     }
   }, [idAnimal]);
 
+  // Adicionamos a verificação do loading para usar a variável
+  if (loading) {
+    return (
+      <div className="diario-page-container">
+        <Header userData={user} />
+        <div style={{ textAlign: 'center', marginTop: '50px', fontSize: '20px' }}>A carregar o diário do seu patudo...</div>
+        <Footer />
+      </div>
+    );
+  }
+
   return (
     <div className="diario-page-container">
       <Header userData={user} />
@@ -100,6 +111,17 @@ const DiarioBordoPage: React.FC = () => {
       {/* SEÇÃO DE SERVIÇOS FINALIZADOS */}
       <section className="tasks-container">
         <h3 style={{ fontSize: '20px', fontWeight: 600, marginBottom: '15px', color: '#1a1a1a' }}>📔 Registos no Diário:</h3>
+        
+        {/* Renderizamos as notas do diário também para usar a variável 'diario' */}
+        {diario.length > 0 && diario.map((nota, idx) => (
+           <div className="task-row" key={`nota-${idx}`}>
+             <div className="task-text">
+               <h4>📝 Nota do Cuidador</h4>
+               <p>{nota.descricao}</p>
+             </div>
+           </div>
+        ))}
+
         {servicos.length > 0 ? (
           servicos.map((servico) => (
             <div className="task-row" key={servico.idServico}>
@@ -112,7 +134,7 @@ const DiarioBordoPage: React.FC = () => {
             </div>
           ))
         ) : (
-          <p style={{ textAlign: 'center', color: '#999', marginTop: '10px', fontStyle: 'italic' }}>Nenhum serviço finalizado hoje</p>
+          diario.length === 0 && <p style={{ textAlign: 'center', color: '#999', marginTop: '10px', fontStyle: 'italic' }}>Nenhum registo efetuado hoje</p>
         )}
       </section>
         <a href="/tutor" className="btn-voltar">
