@@ -2,23 +2,16 @@ import { Router, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import multer from 'multer';
-import fs from 'fs';
 import { GestorHotelFacade } from '../core/GestorHotelFacade';
 import { authMiddleware } from '../middleware/auth';
+import { S3StorageAdapter } from '../adapters/S3StorageAdapter';
 
 const router = Router();
-const gestor = new GestorHotelFacade(); // O nosso Maestro
+const gestor = new GestorHotelFacade();
+const s3Adapter = new S3StorageAdapter();
 
-// Configuração do Multer para Uploads (Mantemos aqui por ser infraestrutura web)
-if (!fs.existsSync('uploads')) { fs.mkdirSync('uploads'); }
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, 'uploads/'),
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, uniqueSuffix + '-' + file.originalname);
-  }
-});
-const upload = multer({ storage: storage });
+// Multer usa a RAM para não encher o disco da AWS
+const upload = multer({ storage: multer.memoryStorage() });
 
 // ==========================================
 // 1. ROTAS PÚBLICAS (Sem tranca)
@@ -54,7 +47,7 @@ router.post('/login', async (req: Request, res: Response) => {
     );
 
     res.status(200).json({ 
-      message: `Bem-vindo, ${utilizador.nome}!`, // <-- CORREÇÃO: O pop-up já vai funcionar!
+      message: `Bem-vindo, ${utilizador.nome}!`,
       token, role: roleReal, nome: utilizador.nome, 
       nif: utilizador.tutor?.nif || '---' 
     });
@@ -65,13 +58,24 @@ router.post('/login', async (req: Request, res: Response) => {
 
 // ==========================================
 // BARREIRA DE SEGURANÇA (JWT)
-// Todas as rotas abaixo exigem Token
 // ==========================================
 router.use(authMiddleware);
 
 // ==========================================
-// 2. ROTAS PROTEGIDAS (Delegadas ao Maestro)
+// 2. ROTAS PROTEGIDAS
 // ==========================================
+
+router.get('/documentos/ver/:chave(*)', async (req: Request, res: Response) => {
+  try {
+    const { chave } = req.params;
+    const urlTemporaria = await s3Adapter.gerarLinkTemporario(chave);
+    
+    // MUDANÇA AQUI: Devolvemos a URL no formato JSON em vez de fazer redirect
+    res.json({ url: urlTemporaria }); 
+  } catch (error: any) {
+    res.status(404).json({ error: "Documento não encontrado ou acesso expirado." });
+  }
+});
 
 // ANIMAIS
 router.get('/animais', async (req, res) => {
@@ -84,27 +88,36 @@ router.get('/animais/tutor/:nif', async (req, res) => {
   res.json(animais);
 });
 
+// --- ROTA DE UPLOAD PARA O S3 ---
 router.post('/animais', upload.single('vacinasFile'), async (req, res) => {
   try {
-    const uploadedFile = (req as any).file;
-    const caminhoDoc = uploadedFile ? `/uploads/${uploadedFile.filename}` : undefined;
+    const uploadedFile = (req as any).file; 
+    let s3Referencia = undefined;
+
+    if (uploadedFile) {
+      s3Referencia = await s3Adapter.uploadFicheiro(
+        uploadedFile.originalname,
+        uploadedFile.buffer,
+        uploadedFile.mimetype,
+        'documentos' // Fica trancado na pasta documentos
+      );
+    }
     
-    // CORREÇÃO: Vamos retirar o boletimVacinasUrl do req.body para o Prisma não bloquear!
     const { boletimVacinasUrl, ...dadosLimposParaA_BD } = req.body;
     
     const novoAnimal = await gestor.registarAnimal(dadosLimposParaA_BD, uploadedFile ? {
       dataUltimaVacina: new Date(),
-      documento: caminhoDoc
+      documento: s3Referencia 
     } : undefined);
 
     res.status(201).json(novoAnimal);
   } catch (error: any) {
-    console.error("Erro ao adicionar animal:", error); // Isto ajuda-nos a ver erros no terminal!
+    console.error("Erro ao adicionar animal:", error);
     res.status(400).json({ error: error.message });
   }
 });
 
-// RESERVAS
+// RESERVAS E RESTANTES ROTAS
 router.get('/reservas', async (req, res) => {
   const reservas = await gestor.listarReservas();
   res.json(reservas);
@@ -112,13 +125,9 @@ router.get('/reservas', async (req, res) => {
 
 router.post('/reservas', async (req: Request, res: Response) => {
   try {
-    // 1. Extraímos o idAnimal que vem do Frontend
     const { banhos, tosquias, passeios, idAnimal, ...resto } = req.body;
-    
-    // 2. Mudamos-lhe o nome para 'animalId' para o Prisma e a Fachada ficarem felizes!
     const dadosReserva = { ...resto, animalId: idAnimal };
     
-    // Preparar array de serviços para a Fachada
     const servicos: any[] = [];
     if (banhos > 0) for(let i=0; i<banhos; i++) servicos.push({ tipo: 'Adestramento', preco: 20, data: new Date() });
     if (tosquias > 0) for(let i=0; i<tosquias; i++) servicos.push({ tipo: 'Grooming', preco: 10, data: new Date() });
@@ -131,7 +140,6 @@ router.post('/reservas', async (req: Request, res: Response) => {
   }
 });
 
-// OPERAÇÕES DE ESTADO (CHECK-IN/OUT)
 router.patch('/reservas/:id/checkin', async (req, res) => {
   try {
     const r = await gestor.checkIn(req.params.id);
@@ -153,9 +161,6 @@ router.patch('/reservas/:id/cancelar', async (req, res) => {
   } catch (error: any) { res.status(400).json({ error: error.message }); }
 });
 
-// ==========================================
-// PLANO VACINAL
-// ==========================================
 router.patch('/plano-vacinal/:idAnimal', async (req, res) => {
   try {
     const { dataUltimaVacina, isValido, estado } = req.body;
@@ -170,9 +175,6 @@ router.patch('/plano-vacinal/:idAnimal', async (req, res) => {
   }     
 });
 
-// ==========================================
-// TAREFAS (STAFF)
-// ==========================================
 router.get('/tarefas', async (req, res) => {
   try {
     const tarefas = await gestor.listarTarefasDoDia();
@@ -191,9 +193,6 @@ router.patch('/tarefas/:id/concluir', async (req, res) => {
   }
 });
 
-// ==========================================
-// FUNCIONÁRIOS
-// ==========================================
 router.get('/funcionarios/count', async (req, res) => {
   try {
     const total = await gestor.contarFuncionarios();
@@ -212,13 +211,9 @@ router.get('/funcionarios', async (req, res) => {
   }
 });
 
-// ==========================================
-// DIARIO DE BORDO
-// ==========================================
-
 router.get('/animais/:idAnimal/historial', async (req,res) =>{
   try {
-    const historial = await gestor.animalDiario(req.params.idAnimal); // A implementar: Obter os serviços do dia para o animal
+    const historial = await gestor.animalDiario(req.params.idAnimal); 
     res.json(historial);
   } catch (error: any) {
     res.status(400).json({ error: error.message });
@@ -227,7 +222,7 @@ router.get('/animais/:idAnimal/historial', async (req,res) =>{
 
 router.get('/animais/:idAnimal/servicos-finalizados', async (req,res) =>{
   try {
-    const servicos = await gestor.listarServicosFinalizados(req.params.idAnimal); // A implementar: Obter os serviços do dia para o animal
+    const servicos = await gestor.listarServicosFinalizados(req.params.idAnimal); 
     res.json(servicos);
   } catch (error: any) {
     res.status(400).json({ error: error.message });

@@ -48,11 +48,29 @@ const RececaoPage: React.FC = () => {
     fetchData();
   }, [activeTab]);
 
-  // CORREÇÃO: Função atualizada com try/catch e a Rota de Cancelar!
+  // FUNÇÃO MÁGICA PARA ABRIR O PDF COM SEGURANÇA (E SEM BLOQUEADOR DE POPUPS)
+  const handleAbrirPdf = async (chave: string) => {
+    const novaAba = window.open('about:blank', '_blank');
+    
+    if (novaAba) {
+      novaAba.document.write('<h2>A carregar o documento seguro de forma encriptada...</h2>');
+    }
+
+    try {
+      const res = await axios.get(`${API_URL}/api/documentos/ver/${chave}`);
+      if (novaAba) {
+        novaAba.location.href = res.data.url;
+      }
+    } catch (err: any) {
+      console.error(err);
+      if (novaAba) novaAba.close();
+      alert("Erro ao abrir documento. O acesso pode ter expirado ou precisa de reiniciar a sessão.");
+    }
+  };
+
   const handleCheckInAction = async (id: string, accept: boolean) => {
     try {
       if (accept) {
-        // Botão "S" - Abrir modal para preencher plano vacinal
         const reserva = reservas.find(r => r.idReserva === id);
         setReservaPlanoSelecionada(reserva || null);
         setShowPlanoModal(true);
@@ -60,11 +78,10 @@ const RececaoPage: React.FC = () => {
         setVacinaValida(true);
         return;
       } else {
-        // Botão "N" - Agora avisa a BD!
         await axios.patch(`${API_URL}/api/reservas/${id}/cancelar`);
         alert("Reserva cancelada e removida da lista.");
       }
-      fetchData(); // Atualiza a tabela imediatamente
+      fetchData(); 
     } catch (err: any) {
       console.error(err);
       alert(err.response?.data?.error || "Ocorreu um erro no servidor ao processar a ação.");
@@ -73,20 +90,17 @@ const RececaoPage: React.FC = () => {
 
   const handleConfirmarPlanoVacinal = async () => {
     if (!reservaPlanoSelecionada || !dataVacina) {
-      console.log(dataVacina)
       alert("Por favor, preencha a data da última vacina.");
       return;
     }
 
     try {
-      // Atualizar plano vacinal
       await axios.patch(`${API_URL}/api/plano-vacinal/${reservaPlanoSelecionada.animal.idAnimal}`, {
         dataUltimaVacina: new Date(dataVacina),
         isValido: vacinaValida,
         estado: vacinaValida ? 'Valido' : 'Caducado'
       });
 
-      // Fazer check-in
       await axios.patch(`${API_URL}/api/reservas/${reservaPlanoSelecionada.idReserva}/checkin`);
       
       alert("Plano Vacinal preenchido e Check-In realizado com sucesso!");
@@ -167,10 +181,7 @@ const RececaoPage: React.FC = () => {
                   id="data-vacina"
                   type="date"
                   value={dataVacina}
-                  onChange={(e) => {
-                    console.log("Data selecionada:", e.target.value);
-                    setDataVacina(e.target.value);
-                  }}
+                  onChange={(e) => setDataVacina(e.target.value)}
                   className="modal-input"
                 />
               </div>
@@ -187,15 +198,21 @@ const RececaoPage: React.FC = () => {
               </div>
 
               {reservaPlanoSelecionada.animal.planoVacinal?.documento && (
-                <div className="modal-section">
-                  <a 
-                    href={`${API_URL}${reservaPlanoSelecionada.animal.planoVacinal.documento}`} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
+                <div className="modal-section" style={{ textAlign: 'center' }}>
+                  {/* AQUI ESTÁ A CORREÇÃO NO MODAL */}
+                  <button 
+                    type="button"
+                    onClick={() => handleAbrirPdf(reservaPlanoSelecionada.animal.planoVacinal!.documento)}
                     className="modal-link"
+                    style={{ 
+                      background: 'transparent',
+                      border: '1px solid #667eea',
+                      cursor: 'pointer',
+                      width: '100%'
+                    }}
                   >
                     📄 Ver PDF da Ficha Técnica
-                  </a>
+                  </button>
                 </div>
               )}
             </div>
@@ -253,11 +270,25 @@ const RececaoPage: React.FC = () => {
                   {activeTab === 'IN' ? (
                     <>
                       <td>{r.animal.nome}</td>
-                      <td>
-                        {r.animal.planoVacinal?.documento ? (
-                           <a href={`${API_URL}${r.animal.planoVacinal.documento}`} target="_blank" style={{color: '#17a2b8'}}>Com Ficha</a>
-                        ) : "Sem Ficha"}
-                      </td>
+                        <td>
+                          {r.animal.planoVacinal?.documento ? (
+                            /* AQUI ESTÁ A CORREÇÃO NA TABELA */
+                            <button 
+                              onClick={() => handleAbrirPdf(r.animal.planoVacinal!.documento)}
+                              style={{
+                                color: '#17a2b8', 
+                                fontWeight: 'bold', 
+                                background: 'transparent', 
+                                border: 'none', 
+                                cursor: 'pointer',
+                                textDecoration: 'underline',
+                                fontSize: '15px'
+                              }}
+                            >
+                              📄 Ver Ficha
+                            </button>
+                          ) : "Sem Ficha"}
+                        </td>
                       <td>{r.animal.planoVacinal?.isValido ? "Sim" : "Não"}</td>
                       <td>
                         <button className="btn-s" onClick={() => handleCheckInAction(r.idReserva, true)}>S</button>
