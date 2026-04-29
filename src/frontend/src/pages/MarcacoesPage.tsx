@@ -204,12 +204,12 @@ const MarcacoesPage: React.FC = () => {
   const apagarReserva = async (idReserva: string) => {
     try {
       const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-      await axios.delete(`${API_URL}/api/reservas/${idReserva}`);
+      await axios.patch(`${API_URL}/api/reservas/${idReserva}/cancelar`);
       setReservas(reservas.filter((r) => r.idReserva !== idReserva));
-      alert('Reserva eliminada com sucesso!');
-    } catch (err) {
+      alert('Reserva cancelada com sucesso!');
+    } catch (err: any) {
       console.error('Erro ao eliminar reserva:', err);
-      alert('Erro ao eliminar reserva!');
+      alert(err.response?.data?.error || 'Erro ao cancelar reserva!');
     }
   };
 
