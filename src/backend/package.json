@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "scripts": {
     "dev": "nodemon src/index.ts",
-    "build": "tsc && npx prisma generate",
+    "build": "npm i && tsc && npx prisma generate",
     "start": "npx prisma migrate deploy && node dist/index.js"
   },
   "keywords": [],

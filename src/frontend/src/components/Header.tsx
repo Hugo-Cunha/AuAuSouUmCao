@@ -66,14 +66,7 @@ const Header: React.FC<HeaderProps> = ({ title, userData }) => {
           <div onClick={handleLogout} style={{ cursor: 'pointer', textAlign: 'center' }}>
             <div style={{ position: 'relative', display: 'inline-block' }}>
               <LogOut size={40} color="#000" />
-              <span style={{ 
-                position: 'absolute', 
-                top: '-5px', 
-                right: '-5px', 
-                color: '#E74C3C', 
-                fontWeight: 'bold', 
-                fontSize: '24px' 
-              }}>X</span>
+              
             </div>
             <p style={{ margin: '5px 0 0', fontSize: '14px', fontWeight: 'bold' }}>Log Out</p>
           </div>

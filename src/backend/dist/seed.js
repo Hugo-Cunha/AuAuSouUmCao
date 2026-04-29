@@ -1,42 +1,60 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const client_1 = require("@prisma/client");
+const bcrypt_1 = __importDefault(require("bcrypt"));
 const prisma = new client_1.PrismaClient();
 async function main() {
-    console.log('A plantar contas na Base de Dados...');
-    // 1. A Diana (Gestora)
+    console.log('🚀 A atualizar contas com passwords encriptadas...');
+    const saltRounds = 10;
+    const hashedPass = await bcrypt_1.default.hash('password123', saltRounds);
+    // 1. Diana (Admin)
     await prisma.utilizador.upsert({
         where: { email: 'diana@auau.pt' },
-        update: {},
+        update: { password: hashedPass },
         create: {
             nome: 'Diana Silva',
             email: 'diana@auau.pt',
-            password: 'password123',
+            password: hashedPass,
             funcionario: { create: { perfil: 'Admin' } }
         }
     });
-    // 2. O Veterinário
+    // 2. Dr. Carlos (Vet)
     await prisma.utilizador.upsert({
         where: { email: 'vet@auau.pt' },
-        update: {},
+        update: { password: hashedPass },
         create: {
             nome: 'Dr. Carlos',
             email: 'vet@auau.pt',
-            password: 'password123',
+            password: hashedPass,
             funcionario: { create: { perfil: 'Vet' } }
         }
     });
-    // 3. O Staff (Cuidador)
+    // 3. João (Staff)
     await prisma.utilizador.upsert({
         where: { email: 'staff@auau.pt' },
-        update: {},
+        update: { password: hashedPass },
         create: {
             nome: 'João Cuidador',
             email: 'staff@auau.pt',
-            password: 'password123',
+            password: hashedPass,
             funcionario: { create: { perfil: 'Staff' } }
         }
     });
+    // 4. Marta (Receção)
+    await prisma.utilizador.upsert({
+        where: { email: 'rececao@auau.pt' },
+        update: { password: hashedPass },
+        create: {
+            nome: 'Marta Rececionista',
+            email: 'rececao@auau.pt',
+            password: hashedPass,
+            funcionario: { create: { perfil: 'Rececao' } }
+        }
+    });
+    // 5. Garantir que a Box 1 existe
     await prisma.box.upsert({
         where: { numero: 1 },
         update: {},
@@ -44,37 +62,9 @@ async function main() {
             numero: 1,
             tamanho: 2,
             ocupacao: 0,
-            estado: 'Higienizada',
-            reservas: {
-                create: []
-            }
+            estado: 'Higienizada'
         }
     });
-    await prisma.animal.upsert({
-        where: { idAnimal: 'A-789' },
-        update: {},
-        create: {
-            idAnimal: 'A-789',
-            nome: 'Bobi',
-            raca: 'Labrador',
-            reatividade: 'Baixa',
-            microchip: 'PT123456789',
-            estado: 'Saudavel',
-            tutorNif: '123456789', // NIF da Maria Cliente!
-            diarioBordo: {
-                create: [
-                    {
-                        descricao: 'Passeio matinal concluído com muita energia! Brincou com a bola.',
-                        fotos: []
-                    },
-                    {
-                        descricao: 'Comeu a ração toda. Está muito bem disposto hoje.',
-                        fotos: []
-                    }
-                ]
-            }
-        }
-    });
-    console.log('Contas criadas com SUCESSO! 🚀');
+    console.log('✅ Base de Dados atualizada e segura!');
 }
 main().catch(e => console.error(e)).finally(() => prisma.$disconnect());
