@@ -229,4 +229,59 @@ router.get('/animais/:idAnimal/servicos-finalizados', async (req,res) =>{
   }
 });
 
+// ==========================================
+// VETERINÁRIA
+// ==========================================
+router.get('/veterinaria/caes-para-verificar', async (req, res) => {
+  try {
+    const caes = await gestor.listarCaesParaVerificar();
+    res.json(caes);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+router.get('/veterinaria/caes-quarentena', async (req, res) => {
+  try {
+    const caes = await gestor.listarEmQuarentena();
+    res.json(caes);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+router.post('/veterinaria/check-diario/:idAnimal', async (req, res) => {
+  try {
+    const { notas } = req.body;
+    await gestor.registarCheckDiario(req.params.idAnimal, notas);
+    res.status(201).json({ message: 'Check diário registado com sucesso' });
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+router.patch('/veterinaria/quarentena/:idAnimal', async (req, res) => {
+  try {
+    const { motivo, ativar } = req.body;
+    let resultado;
+    if (ativar) {
+      resultado = await gestor.ativarQuarentena(req.params.idAnimal, motivo);
+    } else {
+      resultado = await gestor.desativarQuarentena(req.params.idAnimal);
+    }
+    res.json(resultado);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+router.post('/veterinaria/prescricao', async (req, res) => {
+  try {
+    const prescricao = await gestor.prescreverMedicacao(req.body);
+    res.status(201).json(prescricao);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
 export default router;

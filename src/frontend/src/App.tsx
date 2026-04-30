@@ -7,6 +7,7 @@ import DiarioBordoPage from './pages/DiarioBordoPage';
 import MarcacoesPage from './pages/MarcacoesPage';
 import RececaoPage from './pages/RececaoPage';
 import StaffPage from './pages/StaffPage';
+import VeterinariaPage from './pages/VeterinariaPage';
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
         <Route path="/tutor/diario/:idAnimal" element={<DiarioBordoPage />} />
         <Route path="/rececao" element={<RececaoPage />} />
         <Route path="/staff" element={<StaffPage/>}/>
+        <Route path="/vet" element={<VeterinariaPage/>}/>
         
       </Routes>
     </BrowserRouter>

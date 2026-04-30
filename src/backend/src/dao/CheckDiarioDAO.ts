@@ -1,17 +1,9 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, EstadoClinico } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-export class PrescricaoDAO {
-  async create(dados: any) {
-    return await prisma.prescricao.create({ data: dados });
-  }
-
-  async findByAnimal(animalId: string) {
-    return await prisma.prescricao.findMany({ where: { animalId } });
-  }
-
-    
+export class CheckDiarioDAO {
+  
   // Registra um check diário da veterinária
   async registarCheckDiario(idAnimal: string, notas: string) {
     const hoje = new Date();
@@ -39,7 +31,7 @@ export class PrescricaoDAO {
         idRegisto: diarioExistente.idRegisto
       },
       data: {
-        descricao: `[CHECK VETERINÁRIO] ${notas}` 
+        descricao: notas 
       }
     });
   }
@@ -53,32 +45,12 @@ export class PrescricaoDAO {
     });
 
     // Depois registra no diário
-    const hoje = new Date();
-    hoje.setHours(0, 0, 0, 0);
-    const amanha = new Date(hoje);
-    amanha.setDate(amanha.getDate() + 1);
-
-    const diarioExistente = await prisma.diarioBordo.findFirst({
-      where: {
-        animalId: idAnimal,
-        timestamp: {
-          gte: hoje,
-          lt: amanha
-        }
-      },
-      orderBy: {
-        timestamp: 'desc'
-      }
-    });
-    if (!diarioExistente) {
-      throw new Error(`Não foi encontrado nenhum Diário de Bordo registado hoje para o animal com ID: ${idAnimal}`);
-    }
-    await prisma.diarioBordo.update({
-      where: {
-        idRegisto: diarioExistente.idRegisto
-      },
+    await prisma.diarioBordo.create({
       data: {
-        descricao: `🚨 [QUARENTENA] ${motivo}` 
+        animalId: idAnimal,
+        descricao: `🚨 [QUARENTENA] ${motivo}`,
+        timestamp: new Date(),
+        fotos: []
       }
     });
 

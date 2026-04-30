@@ -45,15 +45,6 @@ export class GestorHotelFacade {
   async atualizarPlanoVacinal(idAnimal: string, dadosVacina: any) {
     return await this.gestHospedes.atualizarPlanoVacinal(idAnimal, dadosVacina);
   }
-
-  async obterHistorialAnimal(idAnimal: string) {
-    return await this.gestHospedes.obterHistorialAnimal(idAnimal);
-  }
-
-  async obterServicosFinalizadosHoje(idAnimal: string) {
-    return await this.gestReservas.obterServicosFinalizadosHoje(idAnimal);
-  }
-
   // ==========================================
   // DELEGAÇÃO: RESERVAS
   // ==========================================
@@ -95,6 +86,33 @@ export class GestorHotelFacade {
 
   async prescreverMedicacao(dados: any) {
     return await this.gestClinica.prescreverMedicacao(dados);
+  }
+
+  // ==========================================
+  // DELEGAÇÃO: VETERINÁRIA
+  // ==========================================
+  async registarCheckDiario(idAnimal: string, notas: string) {
+    return await this.gestClinica.registarCheckDiario(idAnimal, notas);
+  }
+
+  async listarCaesParaVerificar() {
+    return await this.gestClinica.listarCaesParaVerificar();
+  }
+
+  async listarEmQuarentena() {
+    return await this.gestClinica.listarEmQuarentena();
+  }
+
+  async ativarQuarentena(idAnimal: string, motivo: string) {
+    return await this.gestClinica.ativarQuarentena(idAnimal, motivo);
+  }
+
+  async desativarQuarentena(idAnimal: string) {
+    return await this.gestClinica.desativarQuarentena(idAnimal);
+  }
+
+  async verificarSeJaFoiCheckHoje(idAnimal: string) {
+    return await this.gestClinica.verificarSeJaFoiCheckHoje(idAnimal);
   }
 
   // ==========================================
