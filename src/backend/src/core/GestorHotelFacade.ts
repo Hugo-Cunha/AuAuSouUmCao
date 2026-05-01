@@ -45,6 +45,10 @@ export class GestorHotelFacade {
   async atualizarPlanoVacinal(idAnimal: string, dadosVacina: any) {
     return await this.gestHospedes.atualizarPlanoVacinal(idAnimal, dadosVacina);
   }
+
+  async obterUtilizadorPorEmail(email: string) {
+    return await this.gestHospedes.buscarUtilizadorPorEmail(email);
+  }
   // ==========================================
   // DELEGAÇÃO: RESERVAS
   // ==========================================

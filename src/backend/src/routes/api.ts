@@ -5,6 +5,8 @@ import multer from 'multer';
 import { GestorHotelFacade } from '../core/GestorHotelFacade';
 import { authMiddleware } from '../middleware/auth';
 import { S3StorageAdapter } from '../adapters/S3StorageAdapter';
+import { sendEmail } from '../services/EmailService';
+import { generate2FACode, store2FACode, verify2FACode } from '../services/TwoFactorService';
 
 const router = Router();
 const gestor = new GestorHotelFacade();
@@ -39,6 +41,46 @@ router.post('/login', async (req: Request, res: Response) => {
       return res.status(401).json({ error: 'Credenciais inválidas.' });
     }
 
+    // Gerar código 2FA
+    const code = generate2FACode();
+    store2FACode(utilizador.email, code);
+
+    // Enviar email com o código
+    try {
+      await sendEmail(
+        utilizador.email,
+        'Código de Confirmação 2FA - AuAuSouUmCão',
+        `Seu código de confirmação é: ${code}. Este código expira em 10 minutos.`
+      );
+    } catch (emailError) {
+      console.error('Erro ao enviar email:', emailError);
+      return res.status(500).json({ error: 'Erro ao enviar código de confirmação.' });
+    }
+
+    res.status(200).json({
+      requires2FA: true,
+      email: utilizador.email,
+      message: 'Código de confirmação enviado para o seu email.'
+    });
+  } catch (error: any) {
+    res.status(500).json({ error: 'Erro no servidor.' });
+  }
+});
+
+router.post('/verify-2fa', async (req: Request, res: Response) => {
+  try {
+    const { email, code } = req.body;
+
+    if (!verify2FACode(email, code)) {
+      return res.status(401).json({ error: 'Código inválido ou expirado.' });
+    }
+
+    // Buscar utilizador novamente para gerar token
+    const utilizador = await gestor.obterUtilizadorPorEmail(email);
+    if (!utilizador) {
+      return res.status(404).json({ error: 'Utilizador não encontrado.' });
+    }
+
     const roleReal = utilizador.funcionario ? utilizador.funcionario.perfil : 'Tutor';
     const token = jwt.sign(
       { userId: utilizador.idUtilizador, role: roleReal },
@@ -46,10 +88,10 @@ router.post('/login', async (req: Request, res: Response) => {
       { expiresIn: '8h' }
     );
 
-    res.status(200).json({ 
+    res.status(200).json({
       message: `Bem-vindo, ${utilizador.nome}!`,
-      token, role: roleReal, nome: utilizador.nome, 
-      nif: utilizador.tutor?.nif || '---' 
+      token, role: roleReal, nome: utilizador.nome,
+      nif: utilizador.tutor?.nif || '---'
     });
   } catch (error: any) {
     res.status(500).json({ error: 'Erro no servidor.' });

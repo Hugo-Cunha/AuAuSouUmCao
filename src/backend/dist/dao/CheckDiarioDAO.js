@@ -1,15 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.PrescricaoDAO = void 0;
+exports.CheckDiarioDAO = void 0;
 const client_1 = require("@prisma/client");
 const prisma = new client_1.PrismaClient();
-class PrescricaoDAO {
-    async create(dados) {
-        return await prisma.prescricao.create({ data: dados });
-    }
-    async findByAnimal(animalId) {
-        return await prisma.prescricao.findMany({ where: { animalId } });
-    }
+class CheckDiarioDAO {
     // Registra um check diário da veterinária
     async registarCheckDiario(idAnimal, notas) {
         const hoje = new Date();
@@ -36,7 +30,7 @@ class PrescricaoDAO {
                 idRegisto: diarioExistente.idRegisto
             },
             data: {
-                descricao: `[CHECK VETERINÁRIO] ${notas}`
+                descricao: notas
             }
         });
     }
@@ -48,31 +42,12 @@ class PrescricaoDAO {
             data: { estado: 'Quarentena' }
         });
         // Depois registra no diário
-        const hoje = new Date();
-        hoje.setHours(0, 0, 0, 0);
-        const amanha = new Date(hoje);
-        amanha.setDate(amanha.getDate() + 1);
-        const diarioExistente = await prisma.diarioBordo.findFirst({
-            where: {
-                animalId: idAnimal,
-                timestamp: {
-                    gte: hoje,
-                    lt: amanha
-                }
-            },
-            orderBy: {
-                timestamp: 'desc'
-            }
-        });
-        if (!diarioExistente) {
-            throw new Error(`Não foi encontrado nenhum Diário de Bordo registado hoje para o animal com ID: ${idAnimal}`);
-        }
-        await prisma.diarioBordo.update({
-            where: {
-                idRegisto: diarioExistente.idRegisto
-            },
+        await prisma.diarioBordo.create({
             data: {
-                descricao: `🚨 [QUARENTENA] ${motivo}`
+                animalId: idAnimal,
+                descricao: `🚨 [QUARENTENA] ${motivo}`,
+                timestamp: new Date(),
+                fotos: []
             }
         });
         return animalAtualizado;
@@ -148,4 +123,4 @@ class PrescricaoDAO {
         return !!check;
     }
 }
-exports.PrescricaoDAO = PrescricaoDAO;
+exports.CheckDiarioDAO = CheckDiarioDAO;

@@ -10,6 +10,8 @@ const multer_1 = __importDefault(require("multer"));
 const GestorHotelFacade_1 = require("../core/GestorHotelFacade");
 const auth_1 = require("../middleware/auth");
 const S3StorageAdapter_1 = require("../adapters/S3StorageAdapter");
+const EmailService_1 = require("../services/EmailService");
+const TwoFactorService_1 = require("../services/TwoFactorService");
 const router = (0, express_1.Router)();
 const gestor = new GestorHotelFacade_1.GestorHotelFacade();
 const s3Adapter = new S3StorageAdapter_1.S3StorageAdapter();
@@ -36,6 +38,38 @@ router.post('/login', async (req, res) => {
         const utilizador = await gestor.buscarUtilizador(username);
         if (!utilizador || !(await bcrypt_1.default.compare(password, utilizador.password))) {
             return res.status(401).json({ error: 'Credenciais inválidas.' });
+        }
+        // Gerar código 2FA
+        const code = (0, TwoFactorService_1.generate2FACode)();
+        (0, TwoFactorService_1.store2FACode)(utilizador.email, code);
+        // Enviar email com o código
+        try {
+            await (0, EmailService_1.sendEmail)(utilizador.email, 'Código de Confirmação 2FA - AuAuSouUmCão', `Seu código de confirmação é: ${code}. Este código expira em 10 minutos.`);
+        }
+        catch (emailError) {
+            console.error('Erro ao enviar email:', emailError);
+            return res.status(500).json({ error: 'Erro ao enviar código de confirmação.' });
+        }
+        res.status(200).json({
+            requires2FA: true,
+            email: utilizador.email,
+            message: 'Código de confirmação enviado para o seu email.'
+        });
+    }
+    catch (error) {
+        res.status(500).json({ error: 'Erro no servidor.' });
+    }
+});
+router.post('/verify-2fa', async (req, res) => {
+    try {
+        const { email, code } = req.body;
+        if (!(0, TwoFactorService_1.verify2FACode)(email, code)) {
+            return res.status(401).json({ error: 'Código inválido ou expirado.' });
+        }
+        // Buscar utilizador novamente para gerar token
+        const utilizador = await gestor.obterUtilizadorPorEmail(email);
+        if (!utilizador) {
+            return res.status(404).json({ error: 'Utilizador não encontrado.' });
         }
         const roleReal = utilizador.funcionario ? utilizador.funcionario.perfil : 'Tutor';
         const token = jsonwebtoken_1.default.sign({ userId: utilizador.idUtilizador, role: roleReal }, process.env.JWT_SECRET || 'chave_secreta_hotel_canino_2026', { expiresIn: '8h' });
@@ -213,6 +247,62 @@ router.get('/animais/:idAnimal/servicos-finalizados', async (req, res) => {
     try {
         const servicos = await gestor.listarServicosFinalizados(req.params.idAnimal);
         res.json(servicos);
+    }
+    catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+});
+// ==========================================
+// VETERINÁRIA
+// ==========================================
+router.get('/veterinaria/caes-para-verificar', async (req, res) => {
+    try {
+        const caes = await gestor.listarCaesParaVerificar();
+        res.json(caes);
+    }
+    catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+});
+router.get('/veterinaria/caes-quarentena', async (req, res) => {
+    try {
+        const caes = await gestor.listarEmQuarentena();
+        res.json(caes);
+    }
+    catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+});
+router.post('/veterinaria/check-diario/:idAnimal', async (req, res) => {
+    try {
+        const { notas } = req.body;
+        await gestor.registarCheckDiario(req.params.idAnimal, notas);
+        res.status(201).json({ message: 'Check diário registado com sucesso' });
+    }
+    catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+});
+router.patch('/veterinaria/quarentena/:idAnimal', async (req, res) => {
+    try {
+        const { motivo, ativar } = req.body;
+        let resultado;
+        if (ativar) {
+            resultado = await gestor.ativarQuarentena(req.params.idAnimal, motivo);
+        }
+        else {
+            resultado = await gestor.desativarQuarentena(req.params.idAnimal);
+        }
+        res.json(resultado);
+    }
+    catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+});
+router.post('/veterinaria/prescricao', async (req, res) => {
+    try {
+        const prescricao = await gestor.prescreverMedicacao(req.body);
+        res.status(201).json(prescricao);
     }
     catch (error) {
         res.status(400).json({ error: error.message });

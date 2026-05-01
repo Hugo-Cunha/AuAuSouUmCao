@@ -24,5 +24,32 @@ class GestClinicaFacade {
     async registarAdministracaoFoco(funcionarioId) {
         return await this.logsDAO.createLog(funcionarioId);
     }
+    // ==========================================
+    // GESTÃO DE CHECKS DIÁRIOS
+    // ==========================================
+    async registarCheckDiario(idAnimal, notas) {
+        if (!notas || notas.trim().length === 0) {
+            throw new Error("O check deve incluir notas do veterinário.");
+        }
+        return await this.prescricaoDAO.registarCheckDiario(idAnimal, notas);
+    }
+    async listarCaesParaVerificar() {
+        return await this.prescricaoDAO.listarCaesParaVerificar();
+    }
+    async listarEmQuarentena() {
+        return await this.prescricaoDAO.listarEmQuarentena();
+    }
+    async ativarQuarentena(idAnimal, motivo) {
+        if (!motivo || motivo.trim().length === 0) {
+            throw new Error("Deve incluir um motivo para a quarentena.");
+        }
+        return await this.prescricaoDAO.ativarQuarentena(idAnimal, motivo);
+    }
+    async desativarQuarentena(idAnimal) {
+        return await this.prescricaoDAO.desativarQuarentena(idAnimal);
+    }
+    async verificarSeJaFoiCheckHoje(idAnimal) {
+        return await this.prescricaoDAO.verificarSeJaFoiCheckHoje(idAnimal);
+    }
 }
 exports.GestClinicaFacade = GestClinicaFacade;
