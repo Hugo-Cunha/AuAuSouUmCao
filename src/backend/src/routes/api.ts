@@ -68,6 +68,7 @@ router.post('/login', async (req: Request, res: Response) => {
         </div>
       `;
 
+      
       await sendEmail(
         utilizador.email,
         'Código de Confirmação 2FA - AuAuSouUmCão',
@@ -92,7 +93,7 @@ router.post('/login', async (req: Request, res: Response) => {
     if (!utilizadorR) {
       return res.status(404).json({ error: 'Utilizador não encontrado.' });
     }
-    
+
     const roleReal = utilizadorR.funcionario ? utilizadorR.funcionario.perfil : 'Tutor';
     const token = jwt.sign(
       { userId: utilizadorR.idUtilizador, role: roleReal },
