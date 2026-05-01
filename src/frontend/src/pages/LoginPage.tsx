@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Header from '../components/Header';
@@ -12,11 +12,19 @@ const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
   const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false); // Pode ser usado para mostrar um spinner ou desabilitar botões durante requisições
+  const isSubmitting = useRef(false);
+
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'; 
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (isSubmitting.current) return;
+
+    isSubmitting.current = true; 
+    setIsLoading(true);
     try {
       // Mandamos só Email e Password
       const resposta = await axios.post(`${API_URL}/api/login`, { username, password });
@@ -55,10 +63,21 @@ const LoginPage: React.FC = () => {
     } catch (erro: any) {
       alert(erro.response?.data?.error || 'Erro ao tentar iniciar sessão.');
     }
+    finally {
+      isSubmitting.current = false;
+      setIsLoading(false);
+    }
   };
 
   const handleVerify2FA = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (isSubmitting.current) return;
+    isSubmitting.current = true; 
+
+    if (isLoading) return;
+      setIsLoading(true);
+
     try {
       const resposta = await axios.post(`${API_URL}/api/verify-2fa`, { email, code });
       
@@ -88,6 +107,10 @@ const LoginPage: React.FC = () => {
     } catch (erro: any) {
       alert(erro.response?.data?.error || 'Código inválido.');
     }
+    finally {
+      isSubmitting.current = false;
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -106,7 +129,9 @@ const LoginPage: React.FC = () => {
             <input type="password" value={password} onChange={e => setPassword(e.target.value)} required />
             
             <div className="form-buttons center-btn">
-              <button type="submit" className="btn-primary" style={{ width: '100%' }}>Login</button>
+              <button type="submit" className="btn-primary" style={{ width: '100%' }} disabled={isLoading}>
+                {isLoading ? 'A processar...' : 'Login'}
+              </button>
             </div>
             <p style={{ textAlign: 'center', marginTop: '15px', fontSize: '13px' }}>
               Ainda não tem conta? <span style={{ color: '#7DDFD3', cursor: 'pointer', fontWeight: 'bold' }} onClick={() => navigate('/criar-conta')}>Registe-se aqui</span>
